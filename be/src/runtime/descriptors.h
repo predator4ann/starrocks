@@ -305,6 +305,13 @@ private:
     std::string _paimon_native_table;
 };
 
+class KuduTableDescriptor : public HiveTableDescriptor {
+public:
+    KuduTableDescriptor(const TTableDescriptor& tdesc, ObjectPool* pool);
+    ~KuduTableDescriptor() override = default;
+    bool has_partition() const override { return false; }
+};
+
 // ===========================================
 
 class OlapTableDescriptor : public TableDescriptor {

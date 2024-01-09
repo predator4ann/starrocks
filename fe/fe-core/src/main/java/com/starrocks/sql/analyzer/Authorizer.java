@@ -166,6 +166,7 @@ public class Authorizer {
             case FILE:
             case SCHEMA:
             case PAIMON:
+            case KUDU:
                 checkAnyActionOnTable(currentUser, roleIds, new TableName(dbName, tbl.getName()));
                 break;
             case MATERIALIZED_VIEW:

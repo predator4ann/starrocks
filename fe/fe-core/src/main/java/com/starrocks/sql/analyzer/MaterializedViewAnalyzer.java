@@ -125,6 +125,7 @@ public class MaterializedViewAnalyzer {
                     Table.TableType.JDBC,
                     Table.TableType.MYSQL,
                     Table.TableType.PAIMON,
+                    Table.TableType.KUDU,
                     Table.TableType.DELTALAKE,
                     Table.TableType.VIEW);
 

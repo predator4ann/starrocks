@@ -1176,6 +1176,8 @@ public class ShowExecutor {
             location = table.getTableLocation();
         } else if (table.isPaimonTable()) {
             location = table.getTableLocation();
+        } else if (table.isKuduTable()) {
+            location = table.getTableLocation();
         }
 
         if (!Strings.isNullOrEmpty(location)) {

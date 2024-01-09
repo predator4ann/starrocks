@@ -1,0 +1,47 @@
+2023-05-17 10:50:50,606 WARN (fe|54) [FrontendOptions.initAddrUseIp():243] ip address range configured for priority_networks does not include the current IP address
+2023-05-17 10:50:50,971 WARN (fe|54) [StateChangeExecutor.notifyNewFETypeTransfer():62] notify new FE type transfer: LEADER
+2023-05-17 10:50:51,568 WARN (stateChangeExecutor|61) [AuthenticationProviderFactory.installPlugin():32] Plugin MYSQL_NATIVE_PASSWORD has already been installed!
+2023-05-17 10:50:51,570 WARN (stateChangeExecutor|61) [AuthenticationProviderFactory.installPlugin():32] Plugin AUTHENTICATION_LDAP_SIMPLE has already been installed!
+2023-05-17 10:50:51,572 WARN (stateChangeExecutor|61) [AuthenticationProviderFactory.installPlugin():32] Plugin AUTHENTICATION_KERBEROS has already been installed!
+2023-05-17 10:50:51,573 WARN (stateChangeExecutor|61) [AuthenticationProviderFactory.installPlugin():32] Plugin AUTHENTICATION_LDAP_SIMPLE_FOR_EXTERNAL has already been installed!
+2023-05-17 10:50:52,212 WARN (Routine load task scheduler|48) [RoutineLoadTaskScheduler.process():117] no available be slot to scheduler tasks, wait for 10 seconds to scheduler again, you can set max_routine_load_task_num_per_be bigger in fe.conf, current value is 5
+2023-05-17 10:51:08,291 WARN (PBackendService-10001|80) [PseudoOlapTableSink$NodeChannel.open():89] open tablet writer failed: node:10001 Too many versions. tablet_id: 10010, version_count: 4, limit: 4
+2023-05-17 10:51:08,295 WARN (PBackendService-10001|80) [PseudoOlapTableSink$NodeChannel.open():89] open tablet writer failed: node:10002 Too many versions. tablet_id: 10010, version_count: 4, limit: 4
+2023-05-17 10:51:08,313 WARN (PBackendService-10001|80) [PseudoBackend.execBatchPlanFragment():1216] error execBatchPlanFragment
+java.lang.Exception: open sink failed, backend:10001 txn:6 index:10009 has intolerable failure: Too many versions. tablet_id: 10010, version_count: 4, limit: 4 [10001, 10002] numReplica:3 |
+	at com.starrocks.pseudocluster.PseudoBackend.runSink(PseudoBackend.java:1261) ~[test-classes/:?]
+	at com.starrocks.pseudocluster.PseudoBackend.execBatchPlanFragment(PseudoBackend.java:1205) ~[test-classes/:?]
+	at com.starrocks.pseudocluster.PseudoBackend.execBatchPlanFragmentsWithReport(PseudoBackend.java:1232) ~[test-classes/:?]
+	at com.starrocks.pseudocluster.PseudoBackend.access$1200(PseudoBackend.java:173) ~[test-classes/:?]
+	at com.starrocks.pseudocluster.PseudoBackend$PseudoPBackendService.lambda$execBatchPlanFragmentsAsync$4(PseudoBackend.java:926) ~[test-classes/:?]
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:515) [?:?]
+	at java.util.concurrent.FutureTask.run(FutureTask.java:264) [?:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128) [?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628) [?:?]
+	at java.lang.Thread.run(Thread.java:829) [?:?]
+2023-05-17 10:51:08,371 WARN (PBackendService-10001|80) [Coordinator.updateFragmentExecStatus():1507] exec state report failed status=errorCode INTERNAL_ERROR open sink failed, backend:10001 txn:6 index:10009 has intolerable failure: Too many versions. tablet_id: 10010, version_count: 4, limit: 4 [10001, 10002] numReplica:3 |, query_id=ac92a252-f45d-11ed-8304-0242ac110003, instance_id=ac92a252-f45d-11ed-8304-0242ac110004
+2023-05-17 10:51:08,374 WARN (PBackendService-10001|80) [Coordinator.updateStatus():1354] one instance report fail throw updateStatus(), need cancel. job id: 10026, query id: ac92a252-f45d-11ed-8304-0242ac110003, instance id: ac92a252-f45d-11ed-8304-0242ac110004
+2023-05-17 10:51:08,388 WARN (starrocks-mysql-nio-pool-0|93) [StmtExecutor.handleDMLStmt():1501] insert failed: open sink failed, backend:10001 txn:6 index:10009 has intolerable failure: Too many versions. tablet_id: 10010, version_count: 4, limit: 4 [10001, 10002] numReplica:3 |
+2023-05-17 10:51:08,397 WARN (starrocks-mysql-nio-pool-0|93) [StmtExecutor.handleDMLStmt():1620] failed to handle stmt [insert into test.test values (1,"1", 1), (2,"2", 2), (3,"3", 3)] label: insert_ac92a252-f45d-11ed-8304-0242ac110003
+com.starrocks.common.DdlException: open sink failed, backend:10001 txn:6 index:10009 has intolerable failure: Too many versions. tablet_id: 10010, version_count: 4, limit: 4 [10001, 10002] numReplica:3 |
+	at com.starrocks.common.ErrorReport.reportDdlException(ErrorReport.java:95) ~[classes/:?]
+	at com.starrocks.qe.StmtExecutor.handleDMLStmt(StmtExecutor.java:1502) ~[classes/:?]
+	at com.starrocks.qe.StmtExecutor.execute(StmtExecutor.java:516) ~[classes/:?]
+	at com.starrocks.qe.ConnectProcessor.handleQuery(ConnectProcessor.java:359) ~[classes/:?]
+	at com.starrocks.qe.ConnectProcessor.dispatch(ConnectProcessor.java:473) ~[classes/:?]
+	at com.starrocks.qe.ConnectProcessor.processOnce(ConnectProcessor.java:739) ~[classes/:?]
+	at com.starrocks.mysql.nio.ReadListener.lambda$handleEvent$0(ReadListener.java:69) ~[classes/:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128) [?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628) [?:?]
+	at java.lang.Thread.run(Thread.java:829) [?:?]
+2023-05-17 10:51:08,416 WARN (starrocks-mysql-nio-pool-0|93) [StmtExecutor.execute():521] DML statement(insert into test.test values (1,"1", 1), (2,"2", 2), (3,"3", 3)) process failed.
+com.starrocks.common.UserException: open sink failed, backend:10001 txn:6 index:10009 has intolerable failure: Too many versions. tablet_id: 10010, version_count: 4, limit: 4 [10001, 10002] numReplica:3 |
+	at com.starrocks.qe.StmtExecutor.handleDMLStmt(StmtExecutor.java:1664) ~[classes/:?]
+	at com.starrocks.qe.StmtExecutor.execute(StmtExecutor.java:516) ~[classes/:?]
+	at com.starrocks.qe.ConnectProcessor.handleQuery(ConnectProcessor.java:359) ~[classes/:?]
+	at com.starrocks.qe.ConnectProcessor.dispatch(ConnectProcessor.java:473) ~[classes/:?]
+	at com.starrocks.qe.ConnectProcessor.processOnce(ConnectProcessor.java:739) ~[classes/:?]
+	at com.starrocks.mysql.nio.ReadListener.lambda$handleEvent$0(ReadListener.java:69) ~[classes/:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128) [?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628) [?:?]
+	at java.lang.Thread.run(Thread.java:829) [?:?]

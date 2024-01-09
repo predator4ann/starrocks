@@ -35,6 +35,8 @@ import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.iceberg.types.Types;
+import org.apache.kudu.ColumnSchema;
+import org.apache.kudu.ColumnTypeAttributes;
 import org.apache.paimon.types.BigIntType;
 import org.apache.paimon.types.BinaryType;
 import org.apache.paimon.types.BooleanType;
@@ -642,6 +644,59 @@ public class ColumnTypeConverter {
                 return Type.VARBINARY;
             case TIME:
             case FIXED:
+            default:
+                primitiveType = PrimitiveType.UNKNOWN_TYPE;
+        }
+        return ScalarType.createType(primitiveType);
+    }
+
+    public static Type fromKuduType(ColumnSchema columnSchema) {
+        org.apache.kudu.Type kuduType = columnSchema.getType();
+        if (kuduType == null) {
+            return Type.NULL;
+        }
+
+        PrimitiveType primitiveType;
+
+        switch (kuduType) {
+            case BOOL:
+                primitiveType = PrimitiveType.BOOLEAN;
+                break;
+            case INT8:
+                primitiveType = PrimitiveType.TINYINT;
+                break;
+            case INT16:
+                primitiveType = PrimitiveType.SMALLINT;
+                break;
+            case INT32:
+                primitiveType = PrimitiveType.INT;
+                break;
+            case INT64:
+                primitiveType = PrimitiveType.BIGINT;
+                break;
+            case FLOAT:
+                primitiveType = PrimitiveType.FLOAT;
+                break;
+            case DOUBLE:
+                primitiveType = PrimitiveType.DOUBLE;
+                break;
+            case DATE:
+                primitiveType = PrimitiveType.DATE;
+                break;
+            case UNIXTIME_MICROS:
+                primitiveType = PrimitiveType.DATETIME;
+                break;
+            case STRING:
+                return ScalarType.createDefaultExternalTableString();
+            case VARCHAR:
+                return ScalarType.createVarcharType(columnSchema.getTypeAttributes().getLength());
+            case DECIMAL:
+                ColumnTypeAttributes typeAttributes = columnSchema.getTypeAttributes();
+                int precision = typeAttributes.getPrecision();
+                int scale = typeAttributes.getScale();
+                return ScalarType.createUnifiedDecimalType(precision, scale);
+            case BINARY:
+                return Type.VARBINARY;
             default:
                 primitiveType = PrimitiveType.UNKNOWN_TYPE;
         }

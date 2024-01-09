@@ -1,0 +1,1149 @@
+2023-05-17 09:55:55,055 INFO (fe|54) [FrontendOptions.analyzePriorityCidrs():299] configured prior_cidrs value: 127.0.0.1/24
+2023-05-17 09:55:55,111 WARN (fe|54) [FrontendOptions.initAddrUseIp():243] ip address range configured for priority_networks does not include the current IP address
+2023-05-17 09:55:55,112 INFO (fe|54) [FrontendOptions.initAddrUseIp():249] Use IP init local addr, IP: /127.0.0.1
+2023-05-17 09:55:55,230 INFO (fe|54) [NodeMgr.getHelperNodes():644] get helper nodes: [127.0.0.1:9010]
+2023-05-17 09:55:55,268 INFO (fe|54) [NodeMgr.getClusterIdAndRoleOnStartup():240] very first time to start this node. role: FOLLOWER, node name: 127.0.0.1_9010_1684288555264
+2023-05-17 09:55:55,285 INFO (fe|54) [NodeMgr.getClusterIdAndRoleOnStartup():437] Current run_mode is shared_nothing
+2023-05-17 09:55:55,285 INFO (fe|54) [NodeMgr.getClusterIdAndRoleOnStartup():444] Got cluster id: 887162458, role: FOLLOWER, node name: 127.0.0.1_9010_1684288555264 and run_mode: shared_nothing
+2023-05-17 09:55:55,353 INFO (fe|54) [GlobalStateMgr.loadImage():1363] image does not exist: /root/starrocks/fe/fe-core/pseudo_cluster_39067/starrocks-meta/image/image.0
+2023-05-17 09:55:55,360 WARN (fe|54) [StateChangeExecutor.notifyNewFETypeTransfer():62] notify new FE type transfer: LEADER
+2023-05-17 09:55:55,389 INFO (stateChangeExecutor|61) [StateChangeExecutor.runOneCycle():85] begin to transfer FE type from INIT to LEADER
+2023-05-17 09:55:55,392 INFO (stateChangeExecutor|61) [GlobalStateMgr.replayJournal():1972] skip replay journal because 0 <= 0
+2023-05-17 09:55:55,769 INFO (stateChangeExecutor|61) [GlobalStateMgr.reInitializeNewPrivilegeOnUpgrade():3684] reinitialize privilege info before upgrade
+2023-05-17 09:55:55,770 WARN (stateChangeExecutor|61) [AuthenticationProviderFactory.installPlugin():32] Plugin MYSQL_NATIVE_PASSWORD has already been installed!
+2023-05-17 09:55:55,771 WARN (stateChangeExecutor|61) [AuthenticationProviderFactory.installPlugin():32] Plugin AUTHENTICATION_LDAP_SIMPLE has already been installed!
+2023-05-17 09:55:55,772 WARN (stateChangeExecutor|61) [AuthenticationProviderFactory.installPlugin():32] Plugin AUTHENTICATION_KERBEROS has already been installed!
+2023-05-17 09:55:55,773 WARN (stateChangeExecutor|61) [AuthenticationProviderFactory.installPlugin():32] Plugin AUTHENTICATION_LDAP_SIMPLE_FOR_EXTERNAL has already been installed!
+2023-05-17 09:55:55,774 INFO (stateChangeExecutor|61) [AuthorizationManager.initBuiltinRoleUnlocked():290] create built-in role root[-1]
+2023-05-17 09:55:55,775 INFO (stateChangeExecutor|61) [AuthorizationManager.initBuiltinRoleUnlocked():290] create built-in role db_admin[-2]
+2023-05-17 09:55:55,776 INFO (stateChangeExecutor|61) [AuthorizationManager.initBuiltinRoleUnlocked():290] create built-in role cluster_admin[-3]
+2023-05-17 09:55:55,776 INFO (stateChangeExecutor|61) [AuthorizationManager.initBuiltinRoleUnlocked():290] create built-in role user_admin[-4]
+2023-05-17 09:55:55,777 INFO (stateChangeExecutor|61) [AuthorizationManager.initBuiltinRoleUnlocked():290] create built-in role public[-5]
+2023-05-17 09:55:55,786 INFO (stateChangeExecutor|61) [AuthUpgrader.upgradeAsLeader():79] start to upgrade as leader.
+2023-05-17 09:55:55,788 INFO (stateChangeExecutor|61) [AuthUpgrader.upgradeUser():177] ignore root entry : global priv. host: %, user: root, priv: Node_priv Admin_priv , set by resolver: false, domain user ident: null
+2023-05-17 09:55:56,137 INFO (stateChangeExecutor|61) [AuthUpgrader.upgradeAsLeader():83] upgraded as leader successfully.
+2023-05-17 09:55:56,138 INFO (stateChangeExecutor|61) [GlobalStateMgr.transferToLeader():1186] set usingNewPrivilege to true after transfer to leader
+2023-05-17 09:55:56,142 INFO (stateChangeExecutor|61) [GlobalStateMgr.startLeaderOnlyDaemonThreads():1245] checkpointer thread started. thread id is 63
+2023-05-17 09:55:56,257 INFO (stateChangeExecutor|61) [GlobalStateMgr.transferToLeader():1203] leader finished to replay journal, can write now.
+2023-05-17 09:55:56,297 INFO (stateChangeExecutor|61) [StateChangeExecutor.runOneCycle():179] finished to transfer FE type from INIT to LEADER
+2023-05-17 09:55:56,331 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:55:56,332 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:55:56,347 INFO (leaderCheckpointer|63) [Checkpoint.runAfterCatalogReady():95] checkpoint imageVersion 0, checkPointVersion 0
+2023-05-17 09:55:56,347 WARN (Routine load task scheduler|48) [RoutineLoadTaskScheduler.process():117] no available be slot to scheduler tasks, wait for 10 seconds to scheduler again, you can set max_routine_load_task_num_per_be bigger in fe.conf, current value is 5
+2023-05-17 09:55:56,349 INFO (TaskCleaner|60) [TaskManager.dropTasks():360] drop tasks:[]
+2023-05-17 09:55:56,349 INFO (tablet scheduler|41) [TabletScheduler.updateClusterLoadStatistic():406] update cluster load statistic:
+
+2023-05-17 09:55:56,350 INFO (TaskCleaner|60) [TaskManager.removeExpiredTaskRuns():770] remove run history:[]
+2023-05-17 09:55:56,354 INFO (tablet stat mgr|34) [TabletStatMgr.updateLocalTabletStat():158] finished to get local tablet stat of all backends. cost: 0 ms
+2023-05-17 09:55:56,358 INFO (tablet stat mgr|34) [TabletStatMgr.runAfterCatalogReady():126] finished to update index row num of all databases. cost: 0 ms
+2023-05-17 09:55:56,359 INFO (LoadLabelCleaner|58) [TaskManager.dropTasks():360] drop tasks:[]
+2023-05-17 09:55:56,359 INFO (colocate group clone checker|71) [ColocateTableBalancer.matchGroup():846] finished to match colocate group. cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:55:56,361 INFO (LoadLabelCleaner|58) [TaskManager.removeExpiredTaskRuns():770] remove run history:[]
+2023-05-17 09:55:56,385 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 1 (+1)
+TStat cost of tablet check(ms): 0 (+0)
+TStat num of tablet checked in tablet checker: 0 (+0)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 1 (+1)
+TStat cost of tablet schedule(ms): 10 (+10)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:55:57,001 INFO (main|1) [PseudoCluster.build():432] start create and start backends
+2023-05-17 09:55:57,076 INFO (main|1) [PseudoCluster.build():446] add PseudoBackend 10001 127.0.0.10
+2023-05-17 09:55:57,373 INFO (tablet scheduler|41) [TabletScheduler.updateWorkingSlots():254] add new backend 10001 with slots num: 1
+2023-05-17 09:55:57,386 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:55:57,387 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:55:57,388 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 2 (+1)
+TStat cost of tablet check(ms): 0 (+0)
+TStat num of tablet checked in tablet checker: 0 (+0)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 2 (+1)
+TStat cost of tablet schedule(ms): 10 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:55:57,405 INFO (fe|54) [GlobalStateMgr.waitForReady():1091] wait globalStateMgr to be ready. FE type: LEADER. is ready: true
+2023-05-17 09:55:57,405 INFO (fe|54) [GlobalStateMgr.waitForReady():1076] globalStateMgr is ready. FE type: LEADER
+2023-05-17 09:55:57,584 INFO (fe|54) [Xnio.<clinit>():95] XNIO version 3.7.9.Final
+2023-05-17 09:55:57,788 INFO (fe|54) [NioXnio.<clinit>():60] XNIO NIO Implementation Version 3.7.9.Final
+2023-05-17 09:55:58,121 INFO (fe|54) [NMysqlServer.start():90] Open mysql server success on 39067
+2023-05-17 09:55:58,124 INFO (fe|54) [QeService.start():78] QE service start.
+2023-05-17 09:55:58,389 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:55:58,390 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:55:58,391 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 3 (+1)
+TStat cost of tablet check(ms): 0 (+0)
+TStat num of tablet checked in tablet checker: 0 (+0)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 3 (+1)
+TStat cost of tablet schedule(ms): 10 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:55:59,392 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:55:59,393 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:55:59,394 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 4 (+1)
+TStat cost of tablet check(ms): 0 (+0)
+TStat num of tablet checked in tablet checker: 0 (+0)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 4 (+1)
+TStat cost of tablet schedule(ms): 10 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:00,397 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:00,397 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:00,398 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 5 (+1)
+TStat cost of tablet check(ms): 0 (+0)
+TStat num of tablet checked in tablet checker: 0 (+0)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 5 (+1)
+TStat cost of tablet schedule(ms): 10 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:01,400 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:01,401 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:01,401 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 6 (+1)
+TStat cost of tablet check(ms): 0 (+0)
+TStat num of tablet checked in tablet checker: 0 (+0)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 6 (+1)
+TStat cost of tablet schedule(ms): 10 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:01,525 INFO (main|1) [LocalMetastore.createDb():405] createDb dbName = insert_overwrite_test, id = 10006
+2023-05-17 09:56:01,596 INFO (main|1) [Database.checkDataSizeQuota():433] database[insert_overwrite_test] data quota: left bytes: 8388608.000 TB / total: 8388608.000 TB
+2023-05-17 09:56:01,597 INFO (main|1) [Database.checkReplicaQuota():444] database[insert_overwrite_test] replica quota: left number: 9223372036854775807 / total: 9223372036854775807
+2023-05-17 09:56:01,840 INFO (agent-task-pool-0|78) [AgentBatchTask.run():196] submit_tasks done
+2023-05-17 09:56:01,853 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10010 
+2023-05-17 09:56:01,883 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10012 
+2023-05-17 09:56:01,884 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10014 
+2023-05-17 09:56:01,946 INFO (main|1) [OlapTableFactory.createTable():582] Successfully create table[t1;10008]
+2023-05-17 09:56:01,951 INFO (main|1) [Database.checkDataSizeQuota():433] database[insert_overwrite_test] data quota: left bytes: 8388608.000 TB / total: 8388608.000 TB
+2023-05-17 09:56:01,951 INFO (main|1) [Database.checkReplicaQuota():444] database[insert_overwrite_test] replica quota: left number: 9223372036854775804 / total: 9223372036854775807
+2023-05-17 09:56:01,953 INFO (agent-task-pool-0|78) [AgentBatchTask.run():196] submit_tasks done
+2023-05-17 09:56:01,953 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10019 
+2023-05-17 09:56:01,954 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10021 
+2023-05-17 09:56:01,955 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10023 
+2023-05-17 09:56:01,957 INFO (main|1) [OlapTableFactory.createTable():582] Successfully create table[t2;10017]
+2023-05-17 09:56:02,095 INFO (main|1) [Database.checkDataSizeQuota():433] database[insert_overwrite_test] data quota: left bytes: 8388608.000 TB / total: 8388608.000 TB
+2023-05-17 09:56:02,096 INFO (main|1) [Database.checkReplicaQuota():444] database[insert_overwrite_test] replica quota: left number: 9223372036854775801 / total: 9223372036854775807
+2023-05-17 09:56:02,132 INFO (ReportHandler|20) [ReportHandler.tabletReport():365] backend[10001] reports 6 tablet(s). report version: 7
+2023-05-17 09:56:02,132 INFO (be-10001|81) [PseudoBackend.reportTablets():463] report 6 tablets
+2023-05-17 09:56:02,139 INFO (be-10001|81) [PseudoBackend.reportDisks():496] report 1 disks
+2023-05-17 09:56:02,140 INFO (be-10001|81) [PseudoBackend.reportTasks():525] report 1 tasks
+2023-05-17 09:56:02,152 INFO (ReportHandler|20) [TabletInvertedIndex.tabletReport():307] finished to do tablet diff with backend[10001]. sync: 0. metaDel: 0. foundValid: 6. foundInvalid: 0. migration: 0. found invalid transactions 0. found republish transactions 0  cost: 19 ms
+2023-05-17 09:56:02,155 INFO (agent-task-pool-0|78) [AgentBatchTask.run():196] submit_tasks done
+2023-05-17 09:56:02,155 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10029 
+2023-05-17 09:56:02,156 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10031 
+2023-05-17 09:56:02,157 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10033 
+2023-05-17 09:56:02,157 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10035 
+2023-05-17 09:56:02,160 INFO (main|1) [OlapTableFactory.createTable():582] Successfully create table[t3;10027]
+2023-05-17 09:56:02,164 INFO (main|1) [Database.checkDataSizeQuota():433] database[insert_overwrite_test] data quota: left bytes: 8388608.000 TB / total: 8388608.000 TB
+2023-05-17 09:56:02,165 INFO (main|1) [Database.checkReplicaQuota():444] database[insert_overwrite_test] replica quota: left number: 9223372036854775797 / total: 9223372036854775807
+2023-05-17 09:56:02,167 INFO (agent-task-pool-0|78) [AgentBatchTask.run():196] submit_tasks done
+2023-05-17 09:56:02,167 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10041 
+2023-05-17 09:56:02,168 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10043 
+2023-05-17 09:56:02,169 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10045 
+2023-05-17 09:56:02,170 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10047 
+2023-05-17 09:56:02,172 INFO (main|1) [OlapTableFactory.createTable():582] Successfully create table[t4;10039]
+2023-05-17 09:56:02,251 INFO (main|1) [InsertOverwriteJobRunner.gc():237] start to garbage collect
+2023-05-17 09:56:02,255 WARN (main|1) [InsertOverwriteJobRunner.handle():131] insert overwrite job:100 failed. createPartitionElapse:0 ms, insertElapse:0 ms
+2023-05-17 09:56:02,256 INFO (main|1) [InsertOverwriteJobRunner.replayStateChange():153] replay state change:InsertOverwriteStateChangeInfo{jobId=100, fromState=OVERWRITE_PENDING, toState=OVERWRITE_RUNNING, sourcePartitionIds=[2000], tmpPartitionIds=[2001]}
+2023-05-17 09:56:02,257 INFO (main|1) [InsertOverwriteJobRunner.gc():237] start to garbage collect
+2023-05-17 09:56:02,257 INFO (main|1) [InsertOverwriteJobRunner.gc():249] drop temp partition:2001
+2023-05-17 09:56:02,258 WARN (main|1) [InsertOverwriteJobRunner.gc():259] partition 2001 is null
+2023-05-17 09:56:02,259 WARN (main|1) [InsertOverwriteJobRunner.handle():131] insert overwrite job:100 failed. createPartitionElapse:0 ms, insertElapse:0 ms
+2023-05-17 09:56:02,405 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 2 ms, in lock time: 2 ms
+2023-05-17 09:56:02,415 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 8 ms, in lock time: 8 ms
+2023-05-17 09:56:02,415 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 7 (+1)
+TStat cost of tablet check(ms): 10 (+10)
+TStat num of tablet checked in tablet checker: 14 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 7 (+1)
+TStat cost of tablet schedule(ms): 10 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:02,946 INFO (starrocks-mysql-nio I/O-1|82) [AcceptListener.handleEvent():71] Connection established. remote=/127.0.0.1:37394
+2023-05-17 09:56:03,133 INFO (starrocks-mysql-nio-pool-0|92) [MysqlProto.negotiate():255] database in auth packet is null
+2023-05-17 09:56:03,417 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:03,419 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:03,421 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 8 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 28 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 8 (+1)
+TStat cost of tablet schedule(ms): 10 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:04,422 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:04,423 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:04,423 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 9 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 42 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 9 (+1)
+TStat cost of tablet schedule(ms): 10 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:04,632 INFO (starrocks-mysql-nio-pool-0|92) [QeProcessorImpl.registerQuery():95] register query id = fa9305d2-f455-11ed-b9d7-0242ac110003
+2023-05-17 09:56:05,230 INFO (PBackendService-10001|80) [PseudoBackend.execBatchPlanFragment():1209] query fa9305d2-f455-11ed-b9d7-0242ac110003 fragment fa9305d2-f455-11ed-b9d7-0242ac110004 has RESULT_SINK
+2023-05-17 09:56:05,231 INFO (PBackendService-10001|80) [PseudoBackend.execBatchPlanFragment():1213] exec_batch_plan_fragment query: fa9305d2-f455-11ed-b9d7-0242ac110003 fragment: fa9305d2-f455-11ed-b9d7-0242ac110004
+2023-05-17 09:56:05,245 INFO (starrocks-mysql-nio-pool-0|92) [QeProcessorImpl.unregisterQuery():105] deregister query id fa9305d2-f455-11ed-b9d7-0242ac110003
+2023-05-17 09:56:05,251 INFO (starrocks-mysql-nio-pool-0|92) [ResourceGroupMetricMgr.createQeuryResourceGroupMetrics():95] Add query_resource_group metric, resource group name is default_wg
+2023-05-17 09:56:05,254 INFO (starrocks-mysql-nio-pool-0|92) [ResourceGroupMetricMgr$QueryResourceGroupLatencyMetrics.<init>():150] Add query_resource_group_latency metric, resource group name is default_wg
+2023-05-17 09:56:05,255 INFO (starrocks-mysql-nio-pool-0|92) [ResourceGroupMetricMgr$QueryResourceGroupLatencyMetrics.<init>():150] Add query_resource_group_latency metric, resource group name is default_wg
+2023-05-17 09:56:05,255 INFO (starrocks-mysql-nio-pool-0|92) [ResourceGroupMetricMgr$QueryResourceGroupLatencyMetrics.<init>():150] Add query_resource_group_latency metric, resource group name is default_wg
+2023-05-17 09:56:05,256 INFO (starrocks-mysql-nio-pool-0|92) [ResourceGroupMetricMgr$QueryResourceGroupLatencyMetrics.<init>():150] Add query_resource_group_latency metric, resource group name is default_wg
+2023-05-17 09:56:05,256 INFO (starrocks-mysql-nio-pool-0|92) [ResourceGroupMetricMgr$QueryResourceGroupLatencyMetrics.<init>():150] Add query_resource_group_latency metric, resource group name is default_wg
+2023-05-17 09:56:05,257 INFO (starrocks-mysql-nio-pool-0|92) [ResourceGroupMetricMgr$QueryResourceGroupLatencyMetrics.<init>():150] Add query_resource_group_latency metric, resource group name is default_wg
+2023-05-17 09:56:05,424 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:05,426 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:05,435 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 10 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 56 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 10 (+1)
+TStat cost of tablet schedule(ms): 11 (+1)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:05,610 INFO (starrocks-mysql-nio I/O-1|82) [AcceptListener.handleEvent():71] Connection established. remote=/127.0.0.1:37410
+2023-05-17 09:56:05,611 INFO (starrocks-mysql-nio-pool-0|92) [MysqlProto.negotiate():255] database in auth packet is null
+2023-05-17 09:56:05,621 INFO (starrocks-mysql-nio-pool-0|92) [QeProcessorImpl.registerQuery():95] register query id = fc07f297-f455-11ed-b9d7-0242ac110003
+2023-05-17 09:56:05,625 INFO (PBackendService-10001|80) [PseudoBackend.execBatchPlanFragment():1209] query fc07f297-f455-11ed-b9d7-0242ac110003 fragment fc07f297-f455-11ed-b9d7-0242ac110004 has RESULT_SINK
+2023-05-17 09:56:05,625 INFO (PBackendService-10001|80) [PseudoBackend.execBatchPlanFragment():1213] exec_batch_plan_fragment query: fc07f297-f455-11ed-b9d7-0242ac110003 fragment: fc07f297-f455-11ed-b9d7-0242ac110004
+2023-05-17 09:56:05,628 INFO (starrocks-mysql-nio-pool-0|92) [QeProcessorImpl.unregisterQuery():105] deregister query id fc07f297-f455-11ed-b9d7-0242ac110003
+2023-05-17 09:56:05,926 INFO (agent-task-pool-0|78) [AgentBatchTask.run():196] submit_tasks done
+2023-05-17 09:56:05,927 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10051 
+2023-05-17 09:56:05,928 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10053 
+2023-05-17 09:56:05,929 INFO (backend-worker-10001|79) [BeTabletManager.createTablet():63] created tablet 10055 
+2023-05-17 09:56:05,942 INFO (starrocks-mysql-nio-pool-0|92) [DatabaseTransactionMgr.beginTransaction():325] begin transaction: txn_id: 2 with label insert_fc1ed5fc-f455-11ed-b9d7-0242ac110003 from coordinator FE: 127.0.0.1, listner id: -1
+2023-05-17 09:56:06,173 INFO (starrocks-mysql-nio-pool-0|92) [QeProcessorImpl.registerQuery():95] register query id = fc1ed5fc-f455-11ed-b9d7-0242ac110003
+2023-05-17 09:56:06,179 INFO (starrocks-mysql-nio-pool-0|92) [Coordinator.prepareResultSink():597] dispatch load job: fc1ed5fc-f455-11ed-b9d7-0242ac110003 to [TNetworkAddress(hostname:127.0.0.10, port:12102)]
+2023-05-17 09:56:06,233 INFO (PBackendService-10001|80) [PseudoBackend.execBatchPlanFragment():1213] exec_batch_plan_fragment query: fc1ed5fc-f455-11ed-b9d7-0242ac110003 fragment: fc1ed5fc-f455-11ed-b9d7-0242ac110004 #TabletScan: 3 sink: 10008 t1
+2023-05-17 09:56:06,272 INFO (PUBLISH_VERSION|28) [PublishVersionDaemon.publishVersionForOlapTable():161] send publish tasks for txn_id: 2
+2023-05-17 09:56:06,272 INFO (starrocks-mysql-nio-pool-0|92) [DatabaseTransactionMgr.commitTransaction():496] transaction:[TransactionState. txn_id: 2, label: insert_fc1ed5fc-f455-11ed-b9d7-0242ac110003, db id: 10006, table id list: 10008, callback id: -1, coordinator: FE: 127.0.0.1, transaction status: COMMITTED, error replicas num: 0, replica ids: , prepare time: 1684288566028, commit time: 1684288566260, finish time: -1, write cost: 232ms, reason:  attachment: com.starrocks.transaction.InsertTxnCommitAttachment@485aefd] successfully committed
+2023-05-17 09:56:06,277 INFO (agent-task-pool-0|78) [AgentBatchTask.run():196] submit_tasks done
+2023-05-17 09:56:06,278 INFO (backend-worker-10001|79) [Tablet.commitNextRowset():322] txn: 2 tablet:10051 rowset commit, version:2 rowset:1 #version:2 #rowset:1
+2023-05-17 09:56:06,284 INFO (backend-worker-10001|79) [Tablet.commitNextRowset():322] txn: 2 tablet:10053 rowset commit, version:2 rowset:1 #version:2 #rowset:1
+2023-05-17 09:56:06,285 INFO (backend-worker-10001|79) [Tablet.commitNextRowset():322] txn: 2 tablet:10055 rowset commit, version:2 rowset:1 #version:2 #rowset:1
+2023-05-17 09:56:06,288 INFO (backend-worker-10001|79) [BeTxnManager.publish():117] backend: 10001 txn: 2 publish version error:0 / total:3 
+2023-05-17 09:56:06,441 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:06,442 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/17/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:06,443 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 11 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 73 (+17)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 11 (+1)
+TStat cost of tablet schedule(ms): 11 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:07,152 INFO (be-10001|81) [PseudoBackend.reportTablets():463] report 17 tablets
+2023-05-17 09:56:07,154 INFO (be-10001|81) [PseudoBackend.reportDisks():496] report 1 disks
+2023-05-17 09:56:07,153 INFO (ReportHandler|20) [ReportHandler.tabletReport():365] backend[10001] reports 17 tablet(s). report version: 20
+2023-05-17 09:56:07,155 INFO (be-10001|81) [PseudoBackend.reportTasks():525] report 2 tasks
+2023-05-17 09:56:07,156 INFO (ReportHandler|20) [TabletInvertedIndex.tabletReport():307] finished to do tablet diff with backend[10001]. sync: 0. metaDel: 0. foundValid: 17. foundInvalid: 0. migration: 0. found invalid transactions 0. found republish transactions 0  cost: 0 ms
+2023-05-17 09:56:07,445 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:07,446 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/17/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:07,448 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 12 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 90 (+17)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 12 (+1)
+TStat cost of tablet schedule(ms): 11 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:08,450 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:08,452 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/17/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:08,452 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 13 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 107 (+17)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 13 (+1)
+TStat cost of tablet schedule(ms): 11 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:09,168 INFO (PUBLISH_VERSION|28) [DatabaseTransactionMgr.finishTransactionNew():1703] finish transaction TransactionState. txn_id: 2, label: insert_fc1ed5fc-f455-11ed-b9d7-0242ac110003, db id: 10006, table id list: 10008, callback id: -1, coordinator: FE: 127.0.0.1, transaction status: VISIBLE, error replicas num: 0, replica ids: , prepare time: 1684288566028, commit time: 1684288566260, finish time: 1684288569163, write cost: 232ms, wait for publish cost: 12ms, publish rpc cost: 17ms, finish txn cost: 2874ms, publish total cost: 2903ms, total cost: 3135ms, reason: , newFinish attachment: com.starrocks.transaction.InsertTxnCommitAttachment@485aefd successfully
+2023-05-17 09:56:09,191 INFO (starrocks-mysql-nio-pool-0|92) [OlapTable.renamePartition():924] rename partition t1 in table t1
+2023-05-17 09:56:09,192 INFO (starrocks-mysql-nio-pool-0|92) [InsertOverwriteJobRunner.handle():135] insert overwrite job:10049 succeed. createPartitionElapse:40 ms, insertElapse:3256 ms
+2023-05-17 09:56:09,192 INFO (starrocks-mysql-nio-pool-0|92) [QeProcessorImpl.unregisterQuery():105] deregister query id fc1ed5fc-f455-11ed-b9d7-0242ac110003
+2023-05-17 09:56:09,454 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:09,455 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:09,456 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 14 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 121 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 14 (+1)
+TStat cost of tablet schedule(ms): 11 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:10,458 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:10,460 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:10,461 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 15 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 135 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 15 (+1)
+TStat cost of tablet schedule(ms): 12 (+1)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:11,462 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:11,463 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:11,465 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 16 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 149 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 16 (+1)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:12,159 INFO (be-10001|81) [PseudoBackend.reportTablets():463] report 17 tablets
+2023-05-17 09:56:12,159 INFO (ReportHandler|20) [ReportHandler.tabletReport():365] backend[10001] reports 17 tablet(s). report version: 21
+2023-05-17 09:56:12,161 INFO (be-10001|81) [PseudoBackend.reportDisks():496] report 1 disks
+2023-05-17 09:56:12,161 INFO (be-10001|81) [PseudoBackend.reportTasks():525] report 2 tasks
+2023-05-17 09:56:12,161 INFO (ReportHandler|20) [TabletInvertedIndex.tabletReport():307] finished to do tablet diff with backend[10001]. sync: 0. metaDel: 0. foundValid: 14. foundInvalid: 0. migration: 0. found invalid transactions 0. found republish transactions 0  cost: 0 ms
+2023-05-17 09:56:12,163 INFO (ReportHandler|20) [ReportHandler.addDropReplicaTask():874] delete tablet[10010] from backend[10001] because not found in meta
+2023-05-17 09:56:12,164 INFO (ReportHandler|20) [ReportHandler.addDropReplicaTask():874] delete tablet[10012] from backend[10001] because not found in meta
+2023-05-17 09:56:12,164 INFO (ReportHandler|20) [ReportHandler.addDropReplicaTask():874] delete tablet[10014] from backend[10001] because not found in meta
+2023-05-17 09:56:12,165 INFO (ReportHandler|20) [ReportHandler.deleteFromBackend():962] delete 3 tablet(s), add 0 replica(s) to meta, backend[10001]
+2023-05-17 09:56:12,181 INFO (agent-task-pool-2|90) [AgentBatchTask.run():196] submit_tasks done
+2023-05-17 09:56:12,181 INFO (backend-worker-10001|79) [BeTabletManager.dropTablet():80] Dropped tablet 10010 force:true
+2023-05-17 09:56:12,195 INFO (backend-worker-10001|79) [BeTabletManager.dropTablet():80] Dropped tablet 10012 force:true
+2023-05-17 09:56:12,196 INFO (backend-worker-10001|79) [BeTabletManager.dropTablet():80] Dropped tablet 10014 force:true
+2023-05-17 09:56:12,466 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:12,467 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:12,467 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 17 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 163 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 17 (+1)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:13,469 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:13,470 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:13,471 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 18 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 177 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 18 (+1)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:14,473 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:14,475 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:14,476 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 19 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 191 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 19 (+1)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:15,478 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:15,479 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:15,480 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 20 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 205 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+1)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:16,363 INFO (colocate group clone checker|71) [ColocateTableBalancer.matchGroup():846] finished to match colocate group. cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:16,481 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:16,482 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:16,483 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 21 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 219 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:17,165 INFO (ReportHandler|20) [ReportHandler.tabletReport():365] backend[10001] reports 14 tablet(s). report version: 25
+2023-05-17 09:56:17,165 INFO (be-10001|81) [PseudoBackend.reportTablets():463] report 14 tablets
+2023-05-17 09:56:17,166 INFO (be-10001|81) [PseudoBackend.reportDisks():496] report 1 disks
+2023-05-17 09:56:17,166 INFO (ReportHandler|20) [TabletInvertedIndex.tabletReport():307] finished to do tablet diff with backend[10001]. sync: 0. metaDel: 0. foundValid: 14. foundInvalid: 0. migration: 0. found invalid transactions 0. found republish transactions 0  cost: 0 ms
+2023-05-17 09:56:17,166 INFO (be-10001|81) [PseudoBackend.reportTasks():525] report 3 tasks
+2023-05-17 09:56:17,484 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:17,484 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:17,485 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 22 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 233 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:18,486 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:18,487 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:18,488 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 23 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 247 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:19,489 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:19,490 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:19,491 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 24 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 261 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:20,492 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:20,493 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:20,494 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 25 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 275 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:21,495 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:21,496 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:21,498 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 26 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 289 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:22,169 INFO (ReportHandler|20) [ReportHandler.tabletReport():365] backend[10001] reports 14 tablet(s). report version: 26
+2023-05-17 09:56:22,169 INFO (be-10001|81) [PseudoBackend.reportTablets():463] report 14 tablets
+2023-05-17 09:56:22,171 INFO (be-10001|81) [PseudoBackend.reportDisks():496] report 1 disks
+2023-05-17 09:56:22,171 INFO (ReportHandler|20) [TabletInvertedIndex.tabletReport():307] finished to do tablet diff with backend[10001]. sync: 0. metaDel: 0. foundValid: 14. foundInvalid: 0. migration: 0. found invalid transactions 0. found republish transactions 0  cost: 0 ms
+2023-05-17 09:56:22,172 INFO (be-10001|81) [PseudoBackend.reportTasks():525] report 3 tasks
+2023-05-17 09:56:22,500 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:22,502 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:22,503 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 27 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 303 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:23,505 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:23,507 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:23,508 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 28 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 317 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:24,509 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:24,510 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:24,511 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 29 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 331 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:25,511 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:25,512 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:25,513 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 30 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 345 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:26,515 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:26,516 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:26,517 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 31 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 359 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:27,176 INFO (ReportHandler|20) [ReportHandler.tabletReport():365] backend[10001] reports 14 tablet(s). report version: 27
+2023-05-17 09:56:27,176 INFO (be-10001|81) [PseudoBackend.reportTablets():463] report 14 tablets
+2023-05-17 09:56:27,177 INFO (be-10001|81) [PseudoBackend.reportDisks():496] report 1 disks
+2023-05-17 09:56:27,178 INFO (ReportHandler|20) [TabletInvertedIndex.tabletReport():307] finished to do tablet diff with backend[10001]. sync: 0. metaDel: 0. foundValid: 14. foundInvalid: 0. migration: 0. found invalid transactions 0. found republish transactions 0  cost: 0 ms
+2023-05-17 09:56:27,178 INFO (be-10001|81) [PseudoBackend.reportTasks():525] report 3 tasks
+2023-05-17 09:56:27,518 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:27,519 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:27,520 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 32 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 373 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:28,521 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:28,521 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:28,522 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 33 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 387 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+
+2023-05-17 09:56:29,523 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: true, unhealthy/total/added/in_sched/not_ready: 0/0/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:29,523 INFO (tablet checker|42) [TabletChecker.doCheck():409] finished to check tablets. checkInPrios: false, unhealthy/total/added/in_sched/not_ready: 0/14/0/0/0, cost: 0 ms, in lock time: 0 ms
+2023-05-17 09:56:29,524 INFO (tablet checker|42) [TabletChecker.runAfterCatalogReady():200] TStat :
+TStat num of tablet check round: 34 (+1)
+TStat cost of tablet check(ms): 10 (+0)
+TStat num of tablet checked in tablet checker: 401 (+14)
+TStat num of unhealthy tablet checked in tablet checker: 0 (+0)
+TStat num of tablet being added to tablet scheduler: 0 (+0)
+TStat num of tablet schedule round: 20 (+0)
+TStat cost of tablet schedule(ms): 12 (+0)
+TStat num of tablet being scheduled: 0 (+0)
+TStat num of tablet being scheduled succeeded: 0 (+0)
+TStat num of tablet being scheduled failed: 0 (+0)
+TStat num of tablet being scheduled discard: 0 (+0)
+TStat num of tablet priority upgraded: 0 (+0)
+TStat num of clone task: 0 (+0)
+TStat num of clone task succeeded: 0 (+0)
+TStat num of clone task failed: 0 (+0)
+TStat num of clone task timeout: 0 (+0)
+TStat num of replica missing error: 0 (+0)
+TStat num of replica version missing error: 0 (+0)
+TStat num of replica unavailable error: 0 (+0)
+TStat num of replica redundant error: 0 (+0)
+TStat num of replica missing in cluster error: 0 (+0)
+TStat num of balance scheduled: 0 (+0)
+TStat num of colocate replica mismatch: 0 (+0)
+TStat num of colocate replica redundant: 0 (+0)
+TStat num of colocate balancer running round: 0 (+0)
+

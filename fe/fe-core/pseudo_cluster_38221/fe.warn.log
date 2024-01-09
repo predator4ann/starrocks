@@ -1,0 +1,9 @@
+2023-05-17 09:41:59,995 WARN (fe|54) [FrontendOptions.initAddrUseIp():243] ip address range configured for priority_networks does not include the current IP address
+2023-05-17 09:42:00,235 WARN (fe|54) [StateChangeExecutor.notifyNewFETypeTransfer():62] notify new FE type transfer: LEADER
+2023-05-17 09:42:00,586 WARN (stateChangeExecutor|61) [AuthenticationProviderFactory.installPlugin():32] Plugin MYSQL_NATIVE_PASSWORD has already been installed!
+2023-05-17 09:42:00,588 WARN (stateChangeExecutor|61) [AuthenticationProviderFactory.installPlugin():32] Plugin AUTHENTICATION_LDAP_SIMPLE has already been installed!
+2023-05-17 09:42:00,589 WARN (stateChangeExecutor|61) [AuthenticationProviderFactory.installPlugin():32] Plugin AUTHENTICATION_KERBEROS has already been installed!
+2023-05-17 09:42:00,590 WARN (stateChangeExecutor|61) [AuthenticationProviderFactory.installPlugin():32] Plugin AUTHENTICATION_LDAP_SIMPLE_FOR_EXTERNAL has already been installed!
+2023-05-17 09:42:01,112 WARN (Routine load task scheduler|48) [RoutineLoadTaskScheduler.process():117] no available be slot to scheduler tasks, wait for 10 seconds to scheduler again, you can set max_routine_load_task_num_per_be bigger in fe.conf, current value is 5
+2023-05-17 09:42:11,204 WARN (PBackendService-10003|86) [PseudoBackend.tabletWriterAddChunk():1409] inject write failure txn:2 backend:10001
+2023-05-17 09:42:11,206 WARN (PBackendService-10003|86) [PseudoOlapTableSink$NodeChannel.close():124] close tablet writer failed: node:10001 inject error writeFailureRate:1.0

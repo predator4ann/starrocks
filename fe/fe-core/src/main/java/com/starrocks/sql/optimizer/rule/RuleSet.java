@@ -35,6 +35,7 @@ import com.starrocks.sql.optimizer.rule.implementation.HudiScanImplementationRul
 import com.starrocks.sql.optimizer.rule.implementation.IcebergScanImplementationRule;
 import com.starrocks.sql.optimizer.rule.implementation.IntersectImplementationRule;
 import com.starrocks.sql.optimizer.rule.implementation.JDBCScanImplementationRule;
+import com.starrocks.sql.optimizer.rule.implementation.KuduScanImplementationRule;
 import com.starrocks.sql.optimizer.rule.implementation.LimitImplementationRule;
 import com.starrocks.sql.optimizer.rule.implementation.MergeJoinImplementationRule;
 import com.starrocks.sql.optimizer.rule.implementation.MetaScanImplementationRule;
@@ -168,6 +169,7 @@ public class RuleSet {
             new HudiScanImplementationRule(),
             new DeltaLakeScanImplementationRule(),
             new PaimonScanImplementationRule(),
+            new KuduScanImplementationRule(),
             new SchemaScanImplementationRule(),
             new MysqlScanImplementationRule(),
             new EsScanImplementationRule(),
@@ -224,6 +226,7 @@ public class RuleSet {
                 MergeLimitDirectRule.DELTALAKE_SCAN,
                 MergeLimitDirectRule.FILE_SCAN,
                 MergeLimitDirectRule.PAIMON_SCAN,
+                MergeLimitDirectRule.KUDU_SCAN,
                 MergeLimitDirectRule.SCHEMA_SCAN,
                 MergeLimitDirectRule.MYSQL_SCAN,
                 MergeLimitDirectRule.ES_SCAN,
@@ -247,6 +250,7 @@ public class RuleSet {
                 ExternalScanPartitionPruneRule.FILE_SCAN,
                 ExternalScanPartitionPruneRule.ES_SCAN,
                 ExternalScanPartitionPruneRule.PAIMON_SCAN,
+                ExternalScanPartitionPruneRule.KUDU_SCAN,
                 new LimitPruneTabletsRule()
         ));
 
@@ -262,6 +266,7 @@ public class RuleSet {
                 PruneHDFSScanColumnRule.HUDI_SCAN,
                 PruneHDFSScanColumnRule.TABLE_FUNCTION_TABLE_SCAN,
                 PruneHDFSScanColumnRule.PAIMON_SCAN,
+                PruneScanColumnRule.KUDU_SCAN,
                 PruneScanColumnRule.JDBC_SCAN,
                 PruneScanColumnRule.BINLOG_SCAN,
                 new PruneProjectColumnsRule(),
@@ -291,6 +296,7 @@ public class RuleSet {
                 PushDownPredicateScanRule.DELTALAKE_SCAN,
                 PushDownPredicateScanRule.FILE_SCAN,
                 PushDownPredicateScanRule.PAIMON_SCAN,
+                PushDownPredicateScanRule.KUDU_SCAN,
                 PushDownPredicateScanRule.SCHEMA_SCAN,
                 PushDownPredicateScanRule.ES_SCAN,
                 PushDownPredicateScanRule.META_SCAN,
@@ -394,6 +400,7 @@ public class RuleSet {
                 PruneEmptyScanRule.HUDI_SCAN,
                 PruneEmptyScanRule.ICEBERG_SCAN,
                 PruneEmptyScanRule.PAIMON_SCAN,
+                PruneEmptyScanRule.KUDU_SCAN,
                 PruneEmptyJoinRule.JOIN_LEFT_EMPTY,
                 PruneEmptyJoinRule.JOIN_RIGHT_EMPTY,
                 new PruneEmptyDirectRule(),

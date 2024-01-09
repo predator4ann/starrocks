@@ -114,12 +114,15 @@ public class HiveMetastore implements IHiveMetastore {
         }
 
         if (!HiveMetastoreApiConverter.isHudiTable(table.getSd().getInputFormat())) {
-            validateHiveTableType(table.getTableType());
-            if (table.getTableType().equalsIgnoreCase("VIRTUAL_VIEW")) {
-                return HiveMetastoreApiConverter.toHiveView(table, catalogName);
-            } else {
-                return HiveMetastoreApiConverter.toHiveTable(table, catalogName);
+            if (!HiveMetastoreApiConverter.isKuduTable(table.getSd().getInputFormat())) {
+                validateHiveTableType(table.getTableType());
+                if (table.getTableType().equalsIgnoreCase("VIRTUAL_VIEW")) {
+                    return HiveMetastoreApiConverter.toHiveView(table, catalogName);
+                } else {
+                    return HiveMetastoreApiConverter.toHiveTable(table, catalogName);
+                }
             }
+            return HiveMetastoreApiConverter.toKuduTable(table, catalogName);
         } else {
             return HiveMetastoreApiConverter.toHudiTable(table, catalogName);
         }

@@ -327,6 +327,9 @@ const std::string& PaimonTableDescriptor::get_paimon_native_table() const {
     return _paimon_native_table;
 }
 
+KuduTableDescriptor::KuduTableDescriptor(const TTableDescriptor& tdesc, ObjectPool* pool)
+        : HiveTableDescriptor(tdesc, pool) {}
+
 HiveTableDescriptor::HiveTableDescriptor(const TTableDescriptor& tdesc, ObjectPool* pool) : TableDescriptor(tdesc) {}
 
 bool HiveTableDescriptor::is_partition_col(const SlotDescriptor* slot) const {
@@ -667,6 +670,10 @@ Status DescriptorTbl::create(RuntimeState* state, ObjectPool* pool, const TDescr
         }
         case TTableType::PAIMON_TABLE: {
             desc = pool->add(new PaimonTableDescriptor(tdesc, pool));
+            break;
+        }
+        case TTableType::KUDU_TABLE: {
+            desc = pool->add(new KuduTableDescriptor(tdesc, pool));
             break;
         }
         case TTableType::JDBC_TABLE: {

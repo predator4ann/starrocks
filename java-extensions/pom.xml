@@ -15,6 +15,7 @@
         <module>jni-connector</module>
         <module>udf-examples</module>
         <module>hudi-reader</module>
+        <module>kudu-reader</module>
         <module>paimon-reader</module>
         <module>hive-reader</module>
         <module>hadoop-ext</module>

@@ -12,19 +12,19 @@
 ARG ARTIFACT_SOURCE=image
 
 ARG ARTIFACTIMAGE=starrocks/artifacts-ubuntu:latest
-FROM ${ARTIFACTIMAGE} as artifacts-from-image
+FROM --platform=linux/amd64 ${ARTIFACTIMAGE} as artifacts-from-image
 
 # create a docker build stage that copy locally build artifacts
-FROM busybox:latest as artifacts-from-local
+FROM --platform=linux/amd64 busybox:latest as artifacts-from-local
 ARG LOCAL_REPO_PATH
 COPY ${LOCAL_REPO_PATH}/output/be /release/be_artifacts/be
 
 
-FROM artifacts-from-${ARTIFACT_SOURCE} as artifacts
+FROM --platform=linux/amd64 artifacts-from-${ARTIFACT_SOURCE} as artifacts
 RUN rm -f /release/be_artifacts/be/lib/starrocks_be.debuginfo
 
 
-FROM ubuntu:22.04
+FROM --platform=linux/amd64 ubuntu:22.04
 ARG STARROCKS_ROOT=/opt/starrocks
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
