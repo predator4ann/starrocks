@@ -128,6 +128,7 @@ public class MaterializedViewAnalyzer {
                     Table.TableType.HIVE,
                     Table.TableType.HUDI,
                     Table.TableType.ICEBERG,
+                    Table.TableType.KUDU,
                     Table.TableType.JDBC,
                     Table.TableType.MYSQL,
                     Table.TableType.VIEW,

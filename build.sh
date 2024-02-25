@@ -475,6 +475,9 @@ if [ ${BUILD_BE} -eq 1 ]; then
     cp -r -p ${STARROCKS_HOME}/java-extensions/paimon-reader/target/starrocks-paimon-reader.jar ${STARROCKS_OUTPUT}/be/lib/jni-packages
     cp -r -p ${STARROCKS_HOME}/java-extensions/paimon-reader/target/starrocks-paimon-reader.jar ${STARROCKS_OUTPUT}/be/lib/paimon-reader-lib
     cp -r -p ${STARROCKS_HOME}/java-extensions/hadoop-ext/target/starrocks-hadoop-ext.jar ${STARROCKS_OUTPUT}/be/lib/jni-packages
+    cp -r -p ${STARROCKS_HOME}/java-extensions/kudu-reader/target/kudu-reader-lib ${STARROCKS_OUTPUT}/be/lib/
+    cp -r -p ${STARROCKS_HOME}/java-extensions/kudu-reader/target/starrocks-kudu-reader.jar ${STARROCKS_OUTPUT}/be/lib/jni-packages
+    cp -r -p ${STARROCKS_HOME}/java-extensions/kudu-reader/target/starrocks-kudu-reader.jar ${STARROCKS_OUTPUT}/be/lib/kudu-reader-lib
     cp -r -p ${STARROCKS_THIRDPARTY}/installed/hadoop/share/hadoop/common ${STARROCKS_OUTPUT}/be/lib/hadoop/
     cp -r -p ${STARROCKS_THIRDPARTY}/installed/hadoop/share/hadoop/hdfs ${STARROCKS_OUTPUT}/be/lib/hadoop/
     cp -p ${STARROCKS_THIRDPARTY}/installed/hadoop/share/hadoop/tools/lib/hadoop-azure-* ${STARROCKS_OUTPUT}/be/lib/hadoop/hdfs

@@ -290,6 +290,9 @@ const std::string& PaimonTableDescriptor::get_paimon_options() const {
     return _paimon_options;
 }
 
+KuduTableDescriptor::KuduTableDescriptor(const TTableDescriptor& tdesc, ObjectPool* pool)
+        : HiveTableDescriptor(tdesc, pool) {}
+
 HiveTableDescriptor::HiveTableDescriptor(const TTableDescriptor& tdesc, ObjectPool* pool) : TableDescriptor(tdesc) {}
 
 bool HiveTableDescriptor::is_partition_col(const SlotDescriptor* slot) const {
@@ -634,6 +637,10 @@ Status DescriptorTbl::create(RuntimeState* state, ObjectPool* pool, const TDescr
         }
         case TTableType::JDBC_TABLE: {
             desc = pool->add(new JDBCTableDescriptor(tdesc));
+            break;
+        }
+        case TTableType::KUDU_TABLE: {
+            desc = pool->add(new KuduTableDescriptor(tdesc, pool));
             break;
         }
         default:

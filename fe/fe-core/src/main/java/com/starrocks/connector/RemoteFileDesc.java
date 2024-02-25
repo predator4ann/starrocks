@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.starrocks.connector.hive.TextFileFormatDesc;
 import com.starrocks.connector.paimon.PaimonSplitsInfo;
 import org.apache.iceberg.FileScanTask;
+import org.apache.kudu.client.KuduScanToken;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,10 +41,12 @@ public class RemoteFileDesc {
     // to reduce the memory usage of RemoteFileInfo
     private List<FileScanTask> icebergScanTasks = new ArrayList<>();
     private PaimonSplitsInfo paimonSplitsInfo;
+    private List<KuduScanToken> kuduScanTokens;
 
     private RemoteFileDesc(String fileName, String compression, long length, long modificationTime,
                           ImmutableList<RemoteFileBlockDesc> blockDescs, ImmutableList<String> hudiDeltaLogs,
-                          List<FileScanTask> icebergScanTasks, PaimonSplitsInfo paimonSplitsInfo) {
+                          List<FileScanTask> icebergScanTasks, PaimonSplitsInfo paimonSplitsInfo,
+                          List<KuduScanToken> kuduScanTokens) {
         this.fileName = fileName;
         this.compression = compression;
         this.length = length;
@@ -52,6 +55,7 @@ public class RemoteFileDesc {
         this.hudiDeltaLogs = hudiDeltaLogs;
         this.icebergScanTasks = icebergScanTasks;
         this.paimonSplitsInfo = paimonSplitsInfo;
+        this.kuduScanTokens = kuduScanTokens;
     }
 
     public RemoteFileDesc(String fileName, String compression, long length, long modificationTime,
@@ -65,11 +69,15 @@ public class RemoteFileDesc {
     }
 
     public static RemoteFileDesc createIcebergRemoteFileDesc(List<FileScanTask> tasks) {
-        return new RemoteFileDesc(null, null, 0, 0, null, null, tasks, null);
+        return new RemoteFileDesc(null, null, 0, 0, null, null, tasks, null, null);
     }
 
     public static RemoteFileDesc createPamonRemoteFileDesc(PaimonSplitsInfo paimonSplitsInfo) {
-        return new RemoteFileDesc(null, null, 0, 0, null, null, null, paimonSplitsInfo);
+        return new RemoteFileDesc(null, null, 0, 0, null, null, null, paimonSplitsInfo, null);
+    }
+
+    public static RemoteFileDesc createKuduRemoteFileDesc(List<KuduScanToken> kuduScanTokens) {
+        return new RemoteFileDesc(null, null, 0, 0, null, null, null, null, kuduScanTokens);
     }
 
     public String getFileName() {
