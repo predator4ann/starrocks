@@ -21,7 +21,6 @@ import com.starrocks.connector.Connector;
 import com.starrocks.connector.ConnectorContext;
 import com.starrocks.connector.ConnectorMetadata;
 import com.starrocks.connector.HdfsEnvironment;
-import com.starrocks.connector.MetastoreType;
 import com.starrocks.connector.exception.StarRocksConnectorException;
 import com.starrocks.connector.hive.HiveMetaClient;
 import com.starrocks.connector.hive.HiveMetastore;
@@ -95,7 +94,7 @@ public class KuduConnector implements Connector {
         if (HIVE.equals(catalogType)) {
             Util.validateMetastoreUris(metastoreUris);
             HiveMetaClient metaClient = HiveMetaClient.createHiveMetaClient(this.hdfsEnvironment, properties);
-            hiveMetastore = Optional.of(new HiveMetastore(metaClient, catalogName, MetastoreType.HMS));
+            hiveMetastore = Optional.of(new HiveMetastore(metaClient, catalogName));
             // TODO caching hiveMetastore support
         }
         return new KuduMetadata(catalogName, kuduMaster, schemaEmulationEnabled, schemaEmulationPrefix, hiveMetastore);
