@@ -17,11 +17,12 @@ package com.starrocks.kudu.reader;
 import com.starrocks.jni.connector.ColumnType;
 import com.starrocks.jni.connector.ColumnType.TypeValue;
 import com.starrocks.jni.connector.ColumnValue;
+import org.apache.kudu.client.RowResult;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import org.apache.kudu.client.RowResult;
 
 public class KuduColumnValue implements ColumnValue {
     private final RowResult row;
