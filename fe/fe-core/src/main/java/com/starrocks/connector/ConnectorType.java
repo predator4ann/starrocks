@@ -92,6 +92,8 @@ public enum ConnectorType {
                 return DELTALAKE;
             case "paimon":
                 return PAIMON;
+            case "kudu":
+                return KUDU;
             default:
                 throw new IllegalStateException("Unexpected value: " + name);
         }
