@@ -24,7 +24,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import static com.starrocks.catalog.KuduTableTest.genColumnSchema;
-import static com.starrocks.catalog.ScalarType.CATALOG_MAX_VARCHAR_LENGTH;
+import static com.starrocks.catalog.ScalarType.MAX_VARCHAR_LENGTH;
 
 public class KuduColumnConverterTest {
 
@@ -95,7 +95,7 @@ public class KuduColumnConverterTest {
     public void testConvertString() {
         ColumnSchema columnSchema = genColumnSchema("test", org.apache.kudu.Type.STRING);
         Type result = ColumnTypeConverter.fromKuduType(columnSchema);
-        Assert.assertEquals(result, ScalarType.createVarcharType(CATALOG_MAX_VARCHAR_LENGTH));
+        Assert.assertEquals(result, ScalarType.createVarcharType(MAX_VARCHAR_LENGTH));
     }
 
     @Test

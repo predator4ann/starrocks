@@ -17,12 +17,11 @@ package com.starrocks.kudu.reader;
 import com.starrocks.jni.connector.ColumnType;
 import com.starrocks.jni.connector.ColumnType.TypeValue;
 import com.starrocks.jni.connector.ColumnValue;
-import org.apache.kudu.client.RowResult;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.apache.kudu.client.RowResult;
 
 public class KuduColumnValue implements ColumnValue {
     private final RowResult row;
@@ -72,13 +71,9 @@ public class KuduColumnValue implements ColumnValue {
     }
 
     @Override
-    public LocalDate getDate() {
-        return row.getDate(index).toLocalDate();
-    }
-
-    @Override
-    public LocalDateTime getDateTime(TypeValue type) {
-        return row.getTimestamp(index).toLocalDateTime();
+    public String getTimestamp(TypeValue type) {
+        LocalDateTime localDateTime = row.getTimestamp(index).toLocalDateTime();
+        return KuduScannerUtils.formatDateTime(localDateTime);
     }
 
     @Override

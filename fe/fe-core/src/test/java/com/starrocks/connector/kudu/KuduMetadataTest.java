@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.starrocks.catalog.KuduTableTest.genColumnSchema;
-import static com.starrocks.catalog.ScalarType.CATALOG_MAX_VARCHAR_LENGTH;
+import static com.starrocks.catalog.ScalarType.MAX_VARCHAR_LENGTH;
 
 public class KuduMetadataTest {
     @Mocked
@@ -96,7 +96,7 @@ public class KuduMetadataTest {
         Assert.assertEquals(0, kuduTable.getPartitionColumnNames().size());
         Assert.assertEquals(ScalarType.INT, kuduTable.getColumns().get(0).getType());
         Assert.assertTrue(kuduTable.getBaseSchema().get(0).isAllowNull());
-        Assert.assertEquals(ScalarType.createVarcharType(CATALOG_MAX_VARCHAR_LENGTH),
+        Assert.assertEquals(ScalarType.createVarcharType(MAX_VARCHAR_LENGTH),
                 kuduTable.getBaseSchema().get(1).getType());
         Assert.assertTrue(kuduTable.getBaseSchema().get(1).isAllowNull());
     }
@@ -137,7 +137,7 @@ public class KuduMetadataTest {
         Table table = metadata.getTable("db1", "tbl1");
         KuduTable kuduTable = (KuduTable) table;
         List<RemoteFileInfo> remoteFileInfos = metadata.getRemoteFileInfos(kuduTable, null, -1,
-                null, requiredNames, -1);
+                null, requiredNames);
         Assert.assertEquals(1, remoteFileInfos.size());
         Assert.assertEquals(1, remoteFileInfos.get(0).getFiles().size());
         Assert.assertEquals(1, remoteFileInfos.get(0).getFiles().get(0).getKuduScanTokens().size());
