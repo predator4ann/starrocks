@@ -44,6 +44,7 @@ import com.starrocks.catalog.IcebergTable;
 import com.starrocks.catalog.Index;
 import com.starrocks.catalog.InternalCatalog;
 import com.starrocks.catalog.JDBCTable;
+import com.starrocks.catalog.KuduTable;
 import com.starrocks.catalog.MaterializedView;
 import com.starrocks.catalog.MysqlTable;
 import com.starrocks.catalog.OlapTable;
@@ -196,6 +197,10 @@ public class MaterializedViewAnalyzer {
         } else if (table instanceof IcebergTable) {
             IcebergTable icebergTable = (IcebergTable) table;
             String catalogName = icebergTable.getCatalogName();
+            return Strings.isBlank(catalogName) || isResourceMappingCatalog(catalogName);
+        } else if (table instanceof KuduTable) {
+            KuduTable kuduTable = (KuduTable) table;
+            String catalogName = kuduTable.getCatalogName();
             return Strings.isBlank(catalogName) || isResourceMappingCatalog(catalogName);
         } else {
             return true;
