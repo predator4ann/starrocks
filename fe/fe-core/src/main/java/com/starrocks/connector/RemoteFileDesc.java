@@ -139,6 +139,10 @@ public class RemoteFileDesc {
         return paimonSplitsInfo;
     }
 
+    public List<KuduScanToken> getKuduScanTokens() {
+        return kuduScanTokens;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("RemoteFileDesc{");

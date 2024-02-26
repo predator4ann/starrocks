@@ -14,6 +14,12 @@
 
 package com.starrocks.sql.optimizer.statistics;
 
+import static com.starrocks.sql.optimizer.statistics.ColumnStatistic.buildFrom;
+import static com.starrocks.sql.optimizer.statistics.StatisticsEstimateCoefficient.PREDICATE_UNKNOWN_FILTER_COEFFICIENT;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+import static java.lang.Math.pow;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -131,10 +137,6 @@ import com.starrocks.sql.optimizer.operator.scalar.ScalarOperator;
 import com.starrocks.sql.optimizer.operator.stream.LogicalBinlogScanOperator;
 import com.starrocks.sql.optimizer.operator.stream.PhysicalStreamScanOperator;
 import com.starrocks.statistic.StatisticUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -148,12 +150,9 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static com.starrocks.sql.optimizer.statistics.ColumnStatistic.buildFrom;
-import static com.starrocks.sql.optimizer.statistics.StatisticsEstimateCoefficient.PREDICATE_UNKNOWN_FILTER_COEFFICIENT;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-import static java.lang.Math.pow;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Estimate stats for the root group using a group expression's children's stats
@@ -391,7 +390,7 @@ public class StatisticsCalculator extends OperatorVisitor<Void, ExpressionContex
         if (context.getStatistics() == null) {
             String catalogName = ((KuduTable) table).getCatalogName();
             Statistics stats = GlobalStateMgr.getCurrentState().getMetadataMgr().getTableStatistics(
-                    optimizerContext, catalogName, table, columnRefOperatorColumnMap, null, node.getPredicate(), -1);
+                    optimizerContext, catalogName, table, columnRefOperatorColumnMap, null, node.getPredicate());
             context.setStatistics(stats);
         }
 

@@ -53,11 +53,6 @@ public class LogicalKuduScanOperator extends LogicalScanOperator {
     }
 
     @Override
-    public boolean isEmptyOutputRows() {
-        return !table.isUnPartitioned() && predicates.getSelectedPartitionIds().isEmpty();
-    }
-
-    @Override
     public void setScanOperatorPredicates(ScanOperatorPredicates predicates) {
         this.predicates = predicates;
     }

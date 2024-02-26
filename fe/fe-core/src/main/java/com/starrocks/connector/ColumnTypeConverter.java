@@ -511,7 +511,7 @@ public class ColumnTypeConverter {
                 primitiveType = PrimitiveType.DATETIME;
                 break;
             case STRING:
-                return ScalarType.createDefaultCatalogString();
+                return ScalarType.createDefaultExternalTableString();
             case VARCHAR:
                 return ScalarType.createVarcharType(columnSchema.getTypeAttributes().getLength());
             case DECIMAL:

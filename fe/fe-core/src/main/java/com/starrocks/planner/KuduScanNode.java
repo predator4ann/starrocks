@@ -65,7 +65,7 @@ public class KuduScanNode extends ScanNode {
         List<String> fieldNames =
                 tupleDescriptor.getSlots().stream().map(s -> s.getColumn().getName()).collect(Collectors.toList());
         List<RemoteFileInfo> fileInfos = GlobalStateMgr.getCurrentState().getMetadataMgr().getRemoteFileInfos(
-                kuduTable.getCatalogName(), kuduTable, null, -1, predicate, fieldNames, -1);
+                kuduTable.getCatalogName(), kuduTable, null, -1, predicate, fieldNames);
         RemoteFileDesc remoteFileDesc = fileInfos.get(0).getFiles().get(0);
         List<KuduScanToken> tokens = remoteFileDesc.getKuduScanTokens();
         if (tokens.isEmpty()) {
