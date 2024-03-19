@@ -17,10 +17,12 @@ package com.starrocks.sql.analyzer;
 import com.google.common.collect.Maps;
 import com.starrocks.analysis.Expr;
 import com.starrocks.analysis.FunctionCallExpr;
+import com.starrocks.analysis.IntLiteral;
 import com.starrocks.analysis.SlotRef;
 import com.starrocks.analysis.StringLiteral;
 import com.starrocks.catalog.FunctionSet;
 import com.starrocks.catalog.PrimitiveType;
+import com.starrocks.sql.ast.IntervalLiteral;
 
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -78,6 +80,8 @@ public class MaterializedViewPartitionFunctionChecker {
                 return checkTimeSlice(funcExpr, fmt);
             } else if (name.equalsIgnoreCase(FunctionSet.STR2DATE)) {
                 return checkStr2date(funcExpr);
+            } else if (name.equalsIgnoreCase(FunctionSet.DATE_ADD)) {
+                return checkDateAdd(funcExpr);
             }
         }
         return false;
@@ -139,5 +143,43 @@ public class MaterializedViewPartitionFunctionChecker {
         String dateFormat = format.getStringValue();
         Matcher foreignKeyMatcher = SUPPORTED_DATE_PATTERN.matcher(dateFormat);
         return foreignKeyMatcher.find();
+    }
+
+    public static boolean checkDateAdd(Expr expr) {
+        if (!(expr instanceof FunctionCallExpr)) {
+            return false;
+        }
+        FunctionCallExpr fnExpr = (FunctionCallExpr) expr;
+        String fnNameString = fnExpr.getFnName().getFunction();
+        if (!fnNameString.equalsIgnoreCase(FunctionSet.DATE_ADD)) {
+            return false;
+        }
+        if (!(fnExpr.getChild(1) instanceof IntervalLiteral) && !(fnExpr.getChild(1) instanceof IntLiteral)) {
+            return false;
+        }
+        String fmt = ((StringLiteral) fnExpr.getChild(0)).getValue();
+        if (fmt.equalsIgnoreCase("week")) {
+            throw new SemanticException("The function date_trunc used by the materialized view for partition" +
+                    " does not support week formatting", expr.getPos());
+        }
+        Expr child0 = fnExpr.getChild(0);
+        if (child0 instanceof SlotRef) {
+            SlotRef slotRef = (SlotRef) child0;
+            PrimitiveType primitiveType = slotRef.getType().getPrimitiveType();
+            // must check slotRef type, because function analyze don't check it.
+            return primitiveType == PrimitiveType.DATETIME || primitiveType == PrimitiveType.DATE;
+        } else if (child0 instanceof FunctionCallExpr) {
+            // date_trunc('hour', time_slice(dt, 'minute'))
+            FunctionCallExpr funcExpr = (FunctionCallExpr) child0;
+            String name = funcExpr.getFnName().getFunction();
+            if (name.equalsIgnoreCase(FunctionSet.TIME_SLICE)) {
+                return checkTimeSlice(funcExpr, fmt);
+            } else if (name.equalsIgnoreCase(FunctionSet.STR2DATE)) {
+                return checkStr2date(funcExpr);
+            } else if (name.equalsIgnoreCase(FunctionSet.DATE_ADD)) {
+                return checkDateAdd(funcExpr);
+            }
+        }
+        return false;
     }
 }
