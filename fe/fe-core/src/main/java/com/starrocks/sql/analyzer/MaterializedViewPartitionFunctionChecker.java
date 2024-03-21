@@ -17,8 +17,10 @@ package com.starrocks.sql.analyzer;
 import com.google.common.collect.Maps;
 import com.starrocks.analysis.Expr;
 import com.starrocks.analysis.FunctionCallExpr;
+import com.starrocks.analysis.IntLiteral;
 import com.starrocks.analysis.SlotRef;
 import com.starrocks.analysis.StringLiteral;
+import com.starrocks.analysis.TimestampArithmeticExpr;
 import com.starrocks.catalog.FunctionSet;
 import com.starrocks.catalog.PrimitiveType;
 
@@ -79,6 +81,8 @@ public class MaterializedViewPartitionFunctionChecker {
             } else if (name.equalsIgnoreCase(FunctionSet.STR2DATE)) {
                 return checkStr2date(funcExpr);
             }
+        } else if (child1 instanceof TimestampArithmeticExpr) {
+            return checkDateAdd(child1);
         }
         return false;
     }
@@ -139,5 +143,27 @@ public class MaterializedViewPartitionFunctionChecker {
         String dateFormat = format.getStringValue();
         Matcher foreignKeyMatcher = SUPPORTED_DATE_PATTERN.matcher(dateFormat);
         return foreignKeyMatcher.find();
+    }
+
+    public static boolean checkDateAdd(Expr expr) {
+        if (!(expr instanceof TimestampArithmeticExpr)) {
+            return false;
+        }
+        TimestampArithmeticExpr timestampArithmeticExpr = (TimestampArithmeticExpr) expr;
+        String fnNameString = timestampArithmeticExpr.getFuncName();
+        if (!fnNameString.equalsIgnoreCase(FunctionSet.DATE_ADD)) {
+            return false;
+        }
+        if (!(timestampArithmeticExpr.getChild(1) instanceof IntLiteral)) {
+            return false;
+        }
+        Expr child0 = timestampArithmeticExpr.getChild(0);
+        if (child0 instanceof SlotRef) {
+            SlotRef slotRef = (SlotRef) child0;
+            PrimitiveType primitiveType = slotRef.getType().getPrimitiveType();
+            // must check slotRef type, because function analyze don't check it.
+            return primitiveType == PrimitiveType.DATETIME || primitiveType == PrimitiveType.DATE;
+        }
+        return false;
     }
 }

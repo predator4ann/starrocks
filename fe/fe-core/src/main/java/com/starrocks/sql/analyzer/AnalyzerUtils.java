@@ -40,6 +40,7 @@ import com.starrocks.analysis.SlotRef;
 import com.starrocks.analysis.StringLiteral;
 import com.starrocks.analysis.Subquery;
 import com.starrocks.analysis.TableName;
+import com.starrocks.analysis.TimestampArithmeticExpr;
 import com.starrocks.catalog.AggregateFunction;
 import com.starrocks.catalog.ArrayType;
 import com.starrocks.catalog.Database;
@@ -1267,6 +1268,13 @@ public class AnalyzerUtils {
             String partitionColumnName;
             if (secondExpr instanceof SlotRef) {
                 partitionColumnName = ((SlotRef) secondExpr).getColumnName();
+                columnList.add(partitionColumnName);
+            } else if (secondExpr instanceof TimestampArithmeticExpr) {
+                TimestampArithmeticExpr timestampArithmeticExpr = (TimestampArithmeticExpr) secondExpr;
+                if (!FunctionSet.DATE_ADD.equals(timestampArithmeticExpr.getFuncName())) {
+                    throw new ParsingException(PARSER_ERROR_MSG.unsupportedExprWithInfo(expr.toSql(), "PARTITION BY"), pos);
+                }
+                partitionColumnName = ((SlotRef) timestampArithmeticExpr.getChild(0)).getColumnName();
                 columnList.add(partitionColumnName);
             } else {
                 throw new ParsingException(PARSER_ERROR_MSG.unsupportedExprWithInfo(expr.toSql(), "PARTITION BY"), pos);
