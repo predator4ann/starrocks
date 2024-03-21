@@ -18,6 +18,7 @@ import com.starrocks.analysis.CastExpr;
 import com.starrocks.analysis.Expr;
 import com.starrocks.analysis.FunctionCallExpr;
 import com.starrocks.analysis.SlotRef;
+import com.starrocks.analysis.TimestampArithmeticExpr;
 import com.starrocks.catalog.Function;
 import com.starrocks.catalog.FunctionSet;
 import com.starrocks.catalog.Type;
@@ -46,6 +47,15 @@ public class PartitionExprAnalyzer {
                 analyzePartitionExpr((FunctionCallExpr) arg1, partitionSlotRef);
 
                 Type targetColType = arg1.getType();
+                Type[] dateTruncType = {Type.VARCHAR, targetColType};
+                Function builtinFunction = Expr.getBuiltinFunction(funcCall.getFnName().getFunction(),
+                        dateTruncType, Function.CompareMode.IS_IDENTICAL);
+
+                funcCall.setFn(builtinFunction);
+                funcCall.setType(targetColType);
+            } else if (arg1 instanceof TimestampArithmeticExpr &&
+                    ((TimestampArithmeticExpr) arg1).getFuncName().equalsIgnoreCase(FunctionSet.DATE_ADD)) {
+                Type targetColType = arg1.getChild(0).getType();
                 Type[] dateTruncType = {Type.VARCHAR, targetColType};
                 Function builtinFunction = Expr.getBuiltinFunction(funcCall.getFnName().getFunction(),
                         dateTruncType, Function.CompareMode.IS_IDENTICAL);
