@@ -15,6 +15,7 @@
 package com.starrocks.sql.analyzer;
 
 import com.google.common.collect.Maps;
+import com.starrocks.analysis.CastExpr;
 import com.starrocks.analysis.Expr;
 import com.starrocks.analysis.FunctionCallExpr;
 import com.starrocks.analysis.IntLiteral;
@@ -158,6 +159,9 @@ public class MaterializedViewPartitionFunctionChecker {
             return false;
         }
         Expr child0 = timestampArithmeticExpr.getChild(0);
+        if (child0 instanceof CastExpr) {
+            child0 = child0.getChild(0);
+        }
         if (child0 instanceof SlotRef) {
             SlotRef slotRef = (SlotRef) child0;
             PrimitiveType primitiveType = slotRef.getType().getPrimitiveType();
