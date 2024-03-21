@@ -58,7 +58,7 @@ public class PartitionExprAnalyzer {
                 Type targetColType = arg1.getChild(0).getType();
                 Type[] dateTruncType = {Type.VARCHAR, targetColType};
                 Function builtinFunction = Expr.getBuiltinFunction(funcCall.getFnName().getFunction(),
-                        dateTruncType, Function.CompareMode.IS_IDENTICAL);
+                        dateTruncType, Function.CompareMode.IS_SUPERTYPE_OF);
 
                 funcCall.setFn(builtinFunction);
                 funcCall.setType(targetColType);
