@@ -24,6 +24,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Streams;
 import com.starrocks.alter.AlterJobMgr;
+import com.starrocks.analysis.CastExpr;
 import com.starrocks.analysis.Expr;
 import com.starrocks.analysis.FunctionCallExpr;
 import com.starrocks.analysis.IndexDef;
@@ -32,6 +33,7 @@ import com.starrocks.analysis.SlotDescriptor;
 import com.starrocks.analysis.SlotId;
 import com.starrocks.analysis.SlotRef;
 import com.starrocks.analysis.TableName;
+import com.starrocks.analysis.TimestampArithmeticExpr;
 import com.starrocks.catalog.AggregateType;
 import com.starrocks.catalog.BaseTableInfo;
 import com.starrocks.catalog.Column;
@@ -620,6 +622,14 @@ public class MaterializedViewAnalyzer {
                 String fnName = partitionColumnExpr.getFnName().getFunction();
                 if (fnName.equalsIgnoreCase(FunctionSet.TIME_SLICE) || fnName.equalsIgnoreCase(FunctionSet.STR2DATE)) {
                     return partitionColumnExpr.getChild(0) instanceof SlotRef;
+                }
+            } else if (partitionExpr instanceof TimestampArithmeticExpr) {
+                TimestampArithmeticExpr timestampArithmeticExpr = (TimestampArithmeticExpr) partitionExpr;
+                String fnName = timestampArithmeticExpr.getFuncName();
+                if (fnName.equalsIgnoreCase(FunctionSet.DATE_ADD)) {
+                    Expr child = timestampArithmeticExpr.getChild(0);
+                    return child instanceof SlotRef ||
+                            (child instanceof CastExpr && (child).getChild(0) instanceof SlotRef);
                 }
             }
             return partitionExpr instanceof SlotRef;
