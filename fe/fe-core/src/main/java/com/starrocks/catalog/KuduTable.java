@@ -40,6 +40,7 @@ public class KuduTable extends Table {
             "org.apache.hadoop.hive.kudu.KuduInputFormat", "org.apache.kudu.mapreduce.KuduTableInputFormat");
     public static final String PARTITION_NULL_VALUE = "null";
     public static final String PARAMETER_KEY_KUDU_TABLE_NAME = "kudu.table_name";
+    public static final String PARAMETER_KEY_KUDU_MASTER_ADDRESSES = "kudu.master_addresses";
     private String masterAddresses;
     private String catalogName;
     private String databaseName;
@@ -66,7 +67,8 @@ public class KuduTable extends Table {
     public static KuduTable fromMetastoreTable(org.apache.hadoop.hive.metastore.api.Table table, String catalogName,
                                                List<Column> fullSchema, List<String> partColNames) {
         String kuduTableName = table.getParameters().get(PARAMETER_KEY_KUDU_TABLE_NAME);
-        return new KuduTable(StringUtils.EMPTY, catalogName, table.getDbName(), table.getTableName(),
+        String kuduMasterAddresses = table.getParameters().getOrDefault(PARAMETER_KEY_KUDU_MASTER_ADDRESSES, StringUtils.EMPTY);
+        return new KuduTable(kuduMasterAddresses, catalogName, table.getDbName(), table.getTableName(),
                 kuduTableName, fullSchema, partColNames);
     }
 
