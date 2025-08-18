@@ -553,7 +553,7 @@ static StatusOr<std::shared_ptr<Segment>> get_lake_dcg_segment(GetDeltaColumnCon
         }
         return ctx.dcg_segments[column_file];
     }
-    return Status::ColumnNotFound(fmt::format("Column {} not found in any DCG", ucid));
+    return Status::NotFound(fmt::format("Column {} not found in any DCG", ucid));
 }
 
 static StatusOr<std::unique_ptr<ColumnIterator>> new_lake_dcg_column_iterator(GetDeltaColumnContext& ctx,
@@ -688,7 +688,7 @@ Status UpdateManager::get_column_values(const RowsetUpdateStateParams& params, s
                 auto dcg_col_iter_result = new_lake_dcg_column_iterator(*dcg_ctx, fs, iter_opts, col, tablet_schema);
                 if (dcg_col_iter_result.ok()) {
                     col_iter = std::move(dcg_col_iter_result.value());
-                } else if (!dcg_col_iter_result.status().code() == TStatusCode::COLUMN_NOT_FOUND) {
+                } else if (!dcg_col_iter_result.status().is_not_found()) {
                     // NotFound is expected when column doesn't exist in DCG, other errors are real issues
                     return Status::InternalError(fmt::format("Failed to create DCG column iterator for column {}: {}", 
                                                            col.name(), dcg_col_iter_result.status().to_string()));
