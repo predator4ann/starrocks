@@ -232,6 +232,10 @@ public class OlapTableSink extends DataSink {
         tDataSink.getOlap_table_sink().setLoad_id(newLoadId);
     }
 
+    public TPartialUpdateMode getPartialUpdateMode() {
+        return partialUpdateMode;
+    }
+
     public void setPartialUpdateMode(TPartialUpdateMode mode) {
         this.partialUpdateMode = mode;
     }
