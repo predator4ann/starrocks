@@ -1677,6 +1677,50 @@ CONF_mBool(avro_ignore_union_type_tag, "true");
 // larger buffer size means fewer reads, but higher memory usage
 CONF_mInt32(avro_reader_buffer_size_bytes, "8388608");
 
+// CDC configuration
+// Global CDC enable switch (dynamic parameter)
+CONF_mBool(cdc_enable, "false");
+// Whether to stream CDC sending while collecting to reduce peak memory.
+// When enabled, we still preserve strict per-tablet ordering.
+CONF_mBool(cdc_streaming_send, "false");
+// CDC Kafka configuration
+// Kafka broker list, comma separated
+CONF_String(cdc_kafka_brokers, "localhost:9092");
+// Kafka topic for CDC data
+CONF_String(cdc_kafka_topic, "starrocks_cdc");
+// Maximum message size for Kafka (bytes), should be less than Kafka's message.max.bytes
+CONF_mInt64(cdc_kafka_max_message_size, "1048576"); // 1MB
+// Maximum rows per CDC message (simple limit to avoid oversized messages)
+CONF_mInt32(cdc_kafka_max_rows_per_message, "1024");
+// Kafka producer timeout in milliseconds
+CONF_Int32(cdc_kafka_timeout_ms, "30000");
+// Kafka producer batch size
+CONF_Int32(cdc_kafka_batch_size, "16384");
+// Kafka producer linger time in milliseconds
+CONF_Int32(cdc_kafka_linger_ms, "5");
+// Kafka producer compression type: none, gzip, snappy, lz4, zstd
+CONF_String(cdc_kafka_compression_type, "zstd");
+// Kafka producer acks: 0, 1, all
+CONF_String(cdc_kafka_acks, "all");
+// Kafka producer retries
+CONF_Int32(cdc_kafka_retries, "3");
+// Kafka security protocol: plaintext, ssl, sasl_plaintext, sasl_ssl
+CONF_String(cdc_kafka_security_protocol, "plaintext");
+// Kafka SASL mechanism: PLAIN, SCRAM-SHA-256, SCRAM-SHA-512
+CONF_String(cdc_kafka_sasl_mechanism, "PLAIN");
+// Kafka SASL username
+CONF_String(cdc_kafka_sasl_username, "");
+// Kafka SASL password
+CONF_String(cdc_kafka_sasl_password, "");
+// Kafka transactions to ensure atomic visibility of CDC per publish.
+CONF_Bool(cdc_kafka_enable_transactions, "false");
+// Kafka transaction timeout in milliseconds.
+CONF_Int32(cdc_kafka_txn_timeout_ms, "60000");
+// Size of Kafka producer pool for CDC. Each producer has a unique transactional.id.
+CONF_Int32(cdc_kafka_pool_size, "4");
+// Optional prefix for transactional.id. If empty, a prefix based on hostname and pid is used.
+CONF_String(cdc_kafka_producer_id_prefix, "");
+
 // default batch size for simdjson lib
 CONF_mInt32(json_parse_many_batch_size, "1000000");
 CONF_mBool(enable_dynamic_batch_size_for_json_parse_many, "true");

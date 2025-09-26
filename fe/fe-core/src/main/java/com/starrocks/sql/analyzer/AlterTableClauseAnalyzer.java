@@ -224,6 +224,23 @@ public class AlterTableClauseAnalyzer implements AstVisitor<Void, ConnectContext
             // do nothing
         } else if (properties.containsKey(PropertyAnalyzer.PROPERTIES_TIME_DRIFT_CONSTRAINT)) {
             // do nothing
+        } else if (properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_ENABLE)) {
+            if (table instanceof OlapTable) {
+                OlapTable olapTable = (OlapTable) table;
+                try {
+                    String cdcEnableValue = properties.get(PropertyAnalyzer.PROPERTIES_CDC_ENABLE);
+                    boolean cdcEnable = Boolean.parseBoolean(cdcEnableValue);
+
+                    if (cdcEnable) {
+                        // Only primary key tables can enable CDC
+                        if (olapTable.getKeysType() != KeysType.PRIMARY_KEYS) {
+                            throw new AnalysisException("CDC can only be enabled on primary key tables");
+                        }
+                    }
+                } catch (AnalysisException e) {
+                    ErrorReport.reportSemanticException(ErrorCode.ERR_COMMON_ERROR, e.getMessage());
+                }
+            }
         } else if (properties.containsKey(PropertyAnalyzer.PROPERTIES_REPLICATION_NUM)) {
             PropertyAnalyzer.analyzeReplicationNum(properties, false);
         } else if (properties.containsKey(PropertyAnalyzer.PROPERTIES_STORAGE_COOLDOWN_TTL)) {

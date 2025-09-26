@@ -3527,6 +3527,11 @@ public class OlapTable extends Table {
             properties.put(PropertyAnalyzer.PROPERTIES_STORAGE_TYPE, storageType());
         }
 
+        // CDC (Change Data Capture) enable
+        if (tableProperty != null && tableProperty.isCdcEnable()) {
+            properties.put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, String.valueOf(tableProperty.isCdcEnable()));
+        }
+
         return properties;
     }
 

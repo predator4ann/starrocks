@@ -38,7 +38,6 @@
 #include "util/defer_op.h"
 #include "util/thread.h"
 #include "util/threadpool.h"
-#include "util/time.h"
 #include "util/trace.h"
 
 namespace starrocks {
@@ -221,7 +220,11 @@ void LakeServiceImpl::publish_version(::google::protobuf::RpcController* control
 
                     StatusOr<TabletMetadataPtr> res;
                     if (std::chrono::system_clock::now() < timeout_deadline) {
-                        res = lake::publish_version(_tablet_mgr, tablet_id, base_version, new_version, txns);
+                        bool cdc_enable = false;
+                        if (request->has_cdc_enable()) {
+                            cdc_enable = request->cdc_enable();
+                        }
+                        res = lake::publish_version(_tablet_mgr, tablet_id, base_version, new_version, txns, cdc_enable);
                     } else {
                         auto t = MilliSecondsSinceEpochFromTimePoint(timeout_deadline);
                         res = Status::TimedOut(fmt::format("reached deadline={}/timeout={}", t, timeout_ms));

@@ -44,12 +44,12 @@ class TabletManager;
 // - base_version Version of the base metadata
 // - new_version The new version to be published
 // - txns Transactions to apply in sequence
-// - commit_time New commit timestamp
+// - cdc_enable Whether to enable Change Data Capture (CDC) for this publish operation
 //
 // Return:
 // - StatusOr containing the new published TabletMetadataPtr on success.
 StatusOr<TabletMetadataPtr> publish_version(TabletManager* tablet_mgr, int64_t tablet_id, int64_t base_version,
-                                            int64_t new_version, std::span<const TxnInfoPB> txns);
+                                            int64_t new_version, std::span<const TxnInfoPB> txns, bool cdc_enable);
 
 // Publish a batch new versions of transaction logs.
 //

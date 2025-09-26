@@ -359,6 +359,7 @@ struct TPublishVersionRequest {
     7: optional Types.TTxnType txn_type = Types.TTxnType.TXN_NORMAL
     8: optional i64 gtid
     9: optional bool is_version_overwrite = false
+    10: optional bool cdc_enable = false
 }
 
 struct TClearAlterTaskRequest {
