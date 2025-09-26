@@ -608,8 +608,8 @@ private:
         }
         LOG(INFO) << "Compaction finish. tablet: " << _metadata->id() << ", version: " << _metadata->version()
                   << ", cumulative point: " << _metadata->cumulative_point() << ", rowsets: ["
-                  << JoinInts(rowset_ids, ",") << "]"
-                  << ", delete rowsets: [" << JoinInts(delete_rowset_ids, ",") + "]";
+                  << strings::Join(rowset_ids, ",") << "]"
+                  << ", delete rowsets: [" << strings::Join(delete_rowset_ids, ",") << "]";
         return Status::OK();
     }
 
