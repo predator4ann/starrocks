@@ -3614,6 +3614,19 @@ public class LocalMetastore implements ConnectorMetadata, MVRepairHandler, Memor
                                 ImmutableMap.of(key, propertiesToPersist.get(key)));
                 GlobalStateMgr.getCurrentState().getEditLog().logAlterTableProperties(info);
             }
+            if (propertiesToPersist.containsKey(PropertyAnalyzer.PROPERTIES_CDC_ENABLE)) {
+                boolean cdcEnable = Boolean.parseBoolean(propertiesToPersist.get(PropertyAnalyzer.PROPERTIES_CDC_ENABLE));
+                tableProperty.setCdcEnable(cdcEnable);
+                if (cdcEnable) {
+                    tableProperty.getProperties().put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, "true");
+                } else {
+                    tableProperty.getProperties().remove(PropertyAnalyzer.PROPERTIES_CDC_ENABLE);
+                }
+                ModifyTablePropertyOperationLog info =
+                        new ModifyTablePropertyOperationLog(db.getId(), table.getId(),
+                                ImmutableMap.of(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, String.valueOf(cdcEnable)));
+                GlobalStateMgr.getCurrentState().getEditLog().logAlterTableProperties(info);
+            }
             if (propertiesToPersist.containsKey(PropertyAnalyzer.PROPERTIES_STORAGE_MEDIUM)) {
                 DataProperty dataProperty = (DataProperty) results.get(key);
                 TStorageMedium storageMedium = dataProperty.getStorageMedium();
@@ -3768,6 +3781,14 @@ public class LocalMetastore implements ConnectorMetadata, MVRepairHandler, Memor
             }
             String locations = PropertyAnalyzer.analyzeLocation(properties, true);
             results.put(PropertyAnalyzer.PROPERTIES_LABELS_LOCATION, locations);
+        }
+        if (properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_ENABLE)) {
+            try {
+                boolean cdcEnable = PropertyAnalyzer.analyzeCdcEnable(properties, table.getKeysType());
+                results.put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, cdcEnable);
+            } catch (AnalysisException e) {
+                throw new DdlException(e.getMessage());
+            }
         }
         if (!properties.isEmpty()) {
             throw new DdlException("Modify failed because unknown properties: " + properties);
@@ -4211,6 +4232,9 @@ public class LocalMetastore implements ConnectorMetadata, MVRepairHandler, Memor
                     olapTable.setTableProperty(tableProperty.buildProperty(opCode));
                 } else {
                     tableProperty.modifyTableProperties(properties);
+                    if (properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_ENABLE)) {
+                        tableProperty.buildCdcConfig(olapTable.getKeysType());
+                    }
                     tableProperty.buildProperty(opCode);
                 }
 

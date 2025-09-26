@@ -260,6 +260,9 @@ public class PropertyAnalyzer {
     public static final String MULTI_LOCATION_LABELS_REGEX = "\\s*" + SINGLE_LOCATION_LABEL_REGEX +
             "\\s*(,\\s*" + SINGLE_LOCATION_LABEL_REGEX + "){0,9}\\s*";
 
+    // CDC (Change Data Capture) properties
+    public static final String PROPERTIES_CDC_ENABLE = "cdc.enable";
+
     public static DataProperty analyzeDataProperty(Map<String, String> properties,
                                                    DataProperty inferredDataProperty,
                                                    boolean isDefault)
@@ -1798,5 +1801,27 @@ public class PropertyAnalyzer {
         }
         sb.append(")");
         return sb.toString();
+    }
+
+    public static boolean analyzeCdcEnable(Map<String, String> properties) throws AnalysisException {
+        return analyzeCdcEnable(properties, null);
+    }
+
+    public static boolean analyzeCdcEnable(Map<String, String> properties, KeysType keysType) throws AnalysisException {
+        if (properties != null && properties.containsKey(PROPERTIES_CDC_ENABLE)) {
+            String value = properties.get(PROPERTIES_CDC_ENABLE);
+            properties.remove(PROPERTIES_CDC_ENABLE);
+            boolean cdcEnable = Boolean.parseBoolean(value);
+            
+            if (cdcEnable) {
+                // Only primary key tables can enable CDC
+                if (null != keysType && keysType != KeysType.PRIMARY_KEYS) {
+                    throw new AnalysisException("CDC can only be enabled on primary key tables");
+                }
+            }
+            
+            return cdcEnable;
+        }
+        return false;
     }
 }

@@ -15,11 +15,13 @@
 #include "storage/lake/update_manager.h"
 
 #include "fs/fs_util.h"
+#include <numeric>
 #include "fs/key_cache.h"
 #include "storage/chunk_helper.h"
 #include "storage/del_vector.h"
 #include "storage/delta_column_group.h"
 #include "storage/lake/column_mode_partial_update_handler.h"
+#include "storage/lake/kafka_producer.h"
 #include "storage/lake/lake_local_persistent_index.h"
 #include "storage/lake/lake_persistent_index.h"
 #include "storage/lake/lake_primary_key_compaction_conflict_resolver.h"
@@ -69,6 +71,8 @@ UpdateManager::UpdateManager(std::shared_ptr<LocationProvider> location_provider
     const int64_t block_cache_mem_limit =
             update_mem_limit * std::max(std::min(100, config::lake_pk_index_block_cache_limit_percent), 0) / 100;
     _block_cache = std::make_unique<PersistentIndexBlockCache>(mem_tracker, block_cache_mem_limit);
+    
+    _cdc_collector = std::make_unique<CdcDataCollector>();
 }
 
 UpdateManager::~UpdateManager() {
@@ -507,22 +511,22 @@ Status UpdateManager::_handle_column_upsert_mode(const TxnLogPB_OpWrite& op_writ
         return Status::OK();
     }
 
-    RssidFileInfoContainer rssid_fileinfo_container2;
-    rssid_fileinfo_container2.add_rssid_to_file(*metadata);
-    RowsetUpdateStateParams params2{
+    RssidFileInfoContainer rssid_fileinfo_container;
+    rssid_fileinfo_container.add_rssid_to_file(*metadata);
+    RowsetUpdateStateParams params{
             .op_write = op_write,
             .tablet_schema = std::make_shared<TabletSchema>(metadata->schema()),
             .metadata = metadata,
             .tablet = tablet,
-            .container = rssid_fileinfo_container2,
+            .container = rssid_fileinfo_container,
     };
-    RowsetUpdateState state2;
-    state2.init(params2);
+    RowsetUpdateState state;
+    state.init(params);
     for (uint32_t segment_id = 0; segment_id < op_write.rowset().segments_size(); segment_id++) {
-        RETURN_IF_ERROR(state2.load_segment(segment_id, params2, base_version, false /*resolve*/, false));
+        RETURN_IF_ERROR(state.load_segment(segment_id, params, base_version, false /*resolve*/, false));
     }
 
-    auto tschema = params2.tablet_schema;
+    auto tschema = params.tablet_schema;
     std::vector<uint32_t> pk_cids;
     for (size_t i = 0; i < tschema->num_key_columns(); i++) pk_cids.push_back((uint32_t)i);
     Schema pkey_schema = ChunkHelper::convert_schema(tschema, pk_cids);
@@ -544,7 +548,7 @@ Status UpdateManager::_handle_column_upsert_mode(const TxnLogPB_OpWrite& op_writ
     uint64_t total_rows = 0;
     std::map<uint32_t, size_t> segment_id_to_add_dels_new_acc;
     for (uint32_t seg = 0; seg < op_write.rowset().segments_size(); ++seg) {
-        const auto& cps = state2.parital_update_states(seg);
+        const auto& cps = state.parital_update_states(seg);
         // use src_rss_rowids == UINT64_MAX to detect insert_rowids
         std::vector<uint32_t> insert_rowids;
         insert_rowids.reserve(cps.src_rss_rowids.size());
@@ -1525,6 +1529,158 @@ bool UpdateManager::TEST_primary_index_refcnt(int64_t tablet_id, uint32_t expect
     }
     _index_cache.release(index_entry);
     return index_entry->get_ref() == expected_cnt;
+}
+
+Status UpdateManager::_collect_segment_cdc_data(const TxnLogPB_OpWrite& op_write, const RowsetUpdateStateParams& params,
+                                               int64_t txn_id, const TabletMetadataPtr& metadata,
+                                               CdcTransactionData* cdc_collector, int64_t& total_cdc_time) {
+    if (cdc_collector == nullptr) {
+        return Status::OK();
+    }
+
+    int64_t cdc_start = MonotonicMillis();
+    size_t total_segments = op_write.rowset().segments_size();
+    size_t total_columns = 0;
+
+    for (uint32_t segment_id = 0; segment_id < total_segments; segment_id++) {
+        // Prepare FileInfo structure
+        FileInfo src;
+        src.path = params.tablet->segment_location(op_write.rowset().segments(segment_id));
+        if (segment_id < op_write.rowset().segment_size_size()) {
+            src.size = op_write.rowset().segment_size(segment_id);
+        }
+        if (segment_id < op_write.rowset().segment_encryption_metas_size()) {
+            src.encryption_meta = op_write.rowset().segment_encryption_metas(segment_id);
+        }
+        if (segment_id < op_write.rowset().bundle_file_offsets_size()) {
+            src.bundle_file_offset = op_write.rowset().bundle_file_offsets(segment_id);
+        }
+
+        // Get column IDs for CDC data collection
+        std::vector<uint32_t> cdc_column_ids;
+        
+        if (params.op_write.has_txn_meta()) {
+            // For partial update, collect only modified columns
+            const auto& txn_meta = params.op_write.txn_meta();
+            const auto& partial_update_column_ids = txn_meta.partial_update_column_ids();
+            
+            if (!partial_update_column_ids.empty()) {
+                cdc_column_ids.assign(partial_update_column_ids.begin(), partial_update_column_ids.end());
+            } else {
+                cdc_column_ids.resize(params.tablet_schema->num_columns());
+                std::iota(cdc_column_ids.begin(), cdc_column_ids.end(), 0);
+            }
+        } else {
+            // For full update, collect all columns
+            cdc_column_ids.resize(params.tablet_schema->num_columns());
+            std::iota(cdc_column_ids.begin(), cdc_column_ids.end(), 0);
+        }
+        
+        total_columns += cdc_column_ids.size();
+        
+        // Collect CDC data from segment file
+        RETURN_IF_ERROR(_cdc_collector->collect_update_data(
+            src, params.tablet_schema, cdc_column_ids, segment_id, txn_id, 
+            metadata->version(), cdc_collector));
+    }
+    
+    int64_t cdc_end = MonotonicMillis();
+    total_cdc_time += (cdc_end - cdc_start);
+    return Status::OK();
+}
+
+Status UpdateManager::_collect_delete_cdc_data(const TxnLogPB_OpWrite& op_write, const RowsetUpdateStateParams& params,
+                                              int64_t txn_id, const TabletMetadataPtr& metadata,
+                                              CdcTransactionData* cdc_collector, int64_t& total_cdc_time) {
+    if (cdc_collector == nullptr || op_write.dels_size() == 0) {
+        return Status::OK();
+    }
+
+    int64_t cdc_start = MonotonicMillis();
+    size_t total_deletes = op_write.dels_size();
+
+    PrimaryIndex::DeletesMap new_deletes;
+    RowsetUpdateState state;
+    auto state_entry = _update_state_cache.get_or_create(cache_key(params.tablet->id(), txn_id));
+    state_entry->update_expire_time(MonotonicMillis() + get_cache_expire_ms());
+    DeferOp remove_state_entry([&] { _update_state_cache.remove(state_entry); });
+    state.init(params);
+    
+    for (uint32_t del_id = 0; del_id < total_deletes; del_id++) {
+        RETURN_IF_ERROR(state.load_delete(del_id, params));
+        DCHECK(state.deletes(del_id) != nullptr);
+        
+        // Collect delete data (primary key columns only)
+        RETURN_IF_ERROR(_cdc_collector->collect_delete_data(del_id, state, params, txn_id, 
+                                                           metadata->version(), cdc_collector));
+        
+        state.release_delete(del_id);
+    }
+    
+    int64_t cdc_end = MonotonicMillis();
+    total_cdc_time += (cdc_end - cdc_start);
+    return Status::OK();
+}
+
+StatusOr<int64_t> UpdateManager::process_unified_cdc(const TxnLogPB_OpWrite& op_write, int64_t txn_id, 
+                                                   const TabletMetadataPtr& metadata, Tablet* tablet,
+                                                   bool cdc_enable) {
+    int64_t total_cdc_time = 0;
+    
+    if (!cdc_enable || !_cdc_collector) {
+        return total_cdc_time;
+    }
+
+    auto cdc_collector = std::make_unique<CdcTransactionData>(tablet->id(), txn_id, metadata->version());
+    
+    auto tablet_schema = std::make_shared<TabletSchema>(metadata->schema());
+    RssidFileInfoContainer rssid_fileinfo_container;
+    rssid_fileinfo_container.add_rssid_to_file(*metadata);
+    RowsetUpdateStateParams params{
+            .op_write = op_write,
+            .tablet_schema = tablet_schema,
+            .metadata = metadata,
+            .tablet = tablet,
+            .container = rssid_fileinfo_container,
+    };
+    
+    // Begin Kafka transaction early when streaming send is enabled to cover the whole CDC window
+    if (config::cdc_kafka_enable_transactions && config::cdc_streaming_send) {
+        auto* prod = KafkaProducerPool::instance()->pick(tablet->id());
+        if (prod == nullptr) {
+            return Status::InternalError("Failed to pick Kafka producer from pool");
+        }
+        RETURN_IF_ERROR(prod->begin_transaction());
+    }
+
+    // Collect CDC data for deletions
+    RETURN_IF_ERROR(_collect_delete_cdc_data(op_write, params, txn_id, metadata, cdc_collector.get(), total_cdc_time));
+    
+    // Collect CDC data for non-delete operations
+    RETURN_IF_ERROR(_collect_segment_cdc_data(op_write, params, txn_id, metadata, cdc_collector.get(), total_cdc_time));
+    
+    // Commit CDC transaction data: if streaming+transactions, send has happened already; just commit here.
+    if (cdc_collector->has_data()) {
+        if (config::cdc_kafka_enable_transactions && config::cdc_streaming_send) {
+            auto* prod = KafkaProducerPool::instance()->pick(tablet->id());
+            if (prod == nullptr) {
+                return Status::InternalError("Failed to pick Kafka producer from pool");
+            }
+            RETURN_IF_ERROR(prod->commit_transaction());
+        } else {
+            RETURN_IF_ERROR(_cdc_collector->commit_transaction_data(*cdc_collector));
+        }
+    } else {
+        // No data: if we began a txn, abort to clean state
+        if (config::cdc_kafka_enable_transactions && config::cdc_streaming_send) {
+            auto* prod = KafkaProducerPool::instance()->pick(tablet->id());
+            if (prod) {
+                (void)prod->abort_transaction();
+            }
+        }
+    }
+    
+    return total_cdc_time;
 }
 
 } // namespace starrocks::lake

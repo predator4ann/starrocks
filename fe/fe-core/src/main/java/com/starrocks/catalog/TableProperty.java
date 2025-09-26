@@ -46,6 +46,7 @@ import com.starrocks.analysis.TableName;
 import com.starrocks.binlog.BinlogConfig;
 import com.starrocks.catalog.constraint.ForeignKeyConstraint;
 import com.starrocks.catalog.constraint.UniqueConstraint;
+import com.starrocks.common.AnalysisException;
 import com.starrocks.common.Config;
 import com.starrocks.common.Pair;
 import com.starrocks.common.io.Text;
@@ -313,6 +314,8 @@ public class TableProperty implements Writable, GsonPostProcessable {
 
     private Multimap<String, String> location;
 
+    private boolean cdcEnable = false;
+
     public TableProperty() {
         this(Maps.newLinkedHashMap());
     }
@@ -399,6 +402,7 @@ public class TableProperty implements Writable, GsonPostProcessable {
                 buildDataCachePartitionDuration();
                 buildLocation();
                 buildStorageCoolDownTTL();
+                buildCdcConfig();
                 break;
             case OperationType.OP_MODIFY_TABLE_CONSTRAINT_PROPERTY:
                 buildConstraint();
@@ -817,6 +821,24 @@ public class TableProperty implements Writable, GsonPostProcessable {
         return this;
     }
 
+    public TableProperty buildCdcConfig() {
+        try {
+            cdcEnable = PropertyAnalyzer.analyzeCdcEnable(properties);
+        } catch (AnalysisException e) {
+            LOG.warn("Failed to build CDC config", e);
+        }
+        return this;
+    }
+
+    public TableProperty buildCdcConfig(KeysType keysType) {
+        try {
+            cdcEnable = PropertyAnalyzer.analyzeCdcEnable(properties, keysType);
+        } catch (AnalysisException e) {
+            LOG.warn("Failed to build CDC config", e);
+        }
+        return this;
+    }
+
     public void modifyTableProperties(Map<String, String> modifyProperties) {
         properties.putAll(modifyProperties);
     }
@@ -1093,7 +1115,13 @@ public class TableProperty implements Writable, GsonPostProcessable {
         return useFastSchemaEvolution;
     }
 
+    public boolean isCdcEnable() {
+        return cdcEnable;
+    }
 
+    public void setCdcEnable(boolean cdcEnable) {
+        this.cdcEnable = cdcEnable;
+    }
 
     public static TableProperty read(DataInput in) throws IOException {
         return GsonUtils.GSON.fromJson(Text.readString(in), TableProperty.class);
@@ -1130,5 +1158,6 @@ public class TableProperty implements Writable, GsonPostProcessable {
         buildLocation();
         buildBaseCompactionForbiddenTimeRanges();
         buildMutableBucketNum();
+        buildCdcConfig();
     }
 }

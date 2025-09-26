@@ -71,6 +71,7 @@ public class PublishVersionTask extends AgentTask {
     private TransactionType txnType;
     private final long globalTransactionId;
     private boolean isVersionOverwrite = false;
+    private boolean cdcEnable = false;
 
     public PublishVersionTask(long backendId, long transactionId, long globalTransactionId, long dbId, long commitTimestamp,
                               List<TPartitionVersionInfo> partitionVersionInfos, String traceParent, Span txnSpan,
@@ -114,6 +115,8 @@ public class PublishVersionTask extends AgentTask {
         if (isVersionOverwrite) {
             publishVersionRequest.setIs_version_overwrite(isVersionOverwrite);
         }
+        publishVersionRequest.setCdc_enable(cdcEnable);
+        
         LOG.debug("publish version request: {}", publishVersionRequest);
         return publishVersionRequest;
     }
@@ -153,6 +156,18 @@ public class PublishVersionTask extends AgentTask {
             span.setAttribute("num_error_tablets", errorTablets.size());
             span.end();
         }
+    }
+
+    public boolean isVersionOverwrite() {
+        return isVersionOverwrite;
+    }
+
+    public boolean isCdcEnable() {
+        return cdcEnable;
+    }
+
+    public void setCdcEnable(boolean cdcEnable) {
+        this.cdcEnable = cdcEnable;
     }
 
     private Set<Long> collectErrorReplicas() {

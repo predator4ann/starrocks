@@ -696,6 +696,15 @@ public class OlapTableFactory implements AbstractTableFactory {
                                 table.getName(), e.getMessage()), e);
             }
 
+            if (properties != null && properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_ENABLE)) {
+                try {
+                    boolean cdcEnable = PropertyAnalyzer.analyzeCdcEnable(properties, keysType);
+                    table.getTableProperty().setCdcEnable(cdcEnable);
+                } catch (AnalysisException e) {
+                    throw new DdlException(e.getMessage());
+                }
+            }
+            
             // a set to record every new tablet created when create table
             // if failed in any step, use this set to do clear things
             Set<Long> tabletIdSet = new HashSet<Long>();

@@ -481,12 +481,17 @@ public class PublishVersionDaemon extends FrontendDaemon {
         locker.lockTablesWithIntensiveDbLock(db.getId(), Lists.newArrayList(tableId), LockType.READ);
         // version -> shadowTablets
         long warehouseId = WarehouseManager.DEFAULT_WAREHOUSE_ID;
+        boolean cdcEnable = false;
         try {
             OlapTable table =
                     (OlapTable) GlobalStateMgr.getCurrentState().getLocalMetastore().getTable(db.getId(), tableId);
             if (table == null) {
                 // table has been dropped
                 return true;
+            }
+            
+            if (table.getTableProperty() != null) {
+                cdcEnable = table.getTableProperty().isCdcEnable();
             }
 
             PhysicalPartition partition = table.getPhysicalPartition(publishVersionData.getPartitionId());
@@ -566,7 +571,7 @@ public class PublishVersionDaemon extends FrontendDaemon {
                 Map<ComputeNode, List<Long>> nodeToTablets = new HashMap<>();
                 Utils.publishVersionBatch(publishTablets, txnInfos,
                         startVersion - 1, endVersion, compactionScores, nodeToTablets,
-                        warehouseId, null);
+                        warehouseId, null, cdcEnable);
 
                 Quantiles quantiles = Quantiles.compute(compactionScores.values());
                 stateBatch.setCompactionScore(tableId, partitionId, quantiles);
@@ -790,6 +795,7 @@ public class PublishVersionDaemon extends FrontendDaemon {
         long warehouseId = txnState.getWarehouseId();
         List<Tablet> normalTablets = null;
         List<Tablet> shadowTablets = null;
+        boolean cdcEnable = false;
 
         Locker locker = new Locker();
         locker.lockTablesWithIntensiveDbLock(db.getId(), Lists.newArrayList(tableId), LockType.READ);
@@ -800,6 +806,10 @@ public class PublishVersionDaemon extends FrontendDaemon {
                 txnState.removeTable(tableCommitInfo.getTableId());
                 LOG.info("Removed non-exist table {} from transaction {}. txn_id={}", tableId, txnLabel, txnId);
                 return true;
+            }
+            
+            if (table.getTableProperty() != null) {
+                cdcEnable = table.getTableProperty().isCdcEnable();
             }
             long partitionId = partitionCommitInfo.getPhysicalPartitionId();
             PhysicalPartition partition = table.getPhysicalPartition(partitionId);
@@ -840,7 +850,7 @@ public class PublishVersionDaemon extends FrontendDaemon {
                 // Used to collect statistics when the partition is first imported
                 Map<Long, Long> tabletRowNums = new HashMap<>();
                 Utils.publishVersion(normalTablets, txnInfo, baseVersion, txnVersion, compactionScores,
-                        warehouseId, tabletRowNums);
+                        warehouseId, tabletRowNums, cdcEnable);
 
                 Quantiles quantiles = Quantiles.compute(compactionScores.values());
                 partitionCommitInfo.setCompactionScore(quantiles);

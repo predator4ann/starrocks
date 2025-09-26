@@ -101,7 +101,13 @@ public class Utils {
     public static void publishVersion(@NotNull List<Tablet> tablets, TxnInfoPB txnInfo, long baseVersion,
                                       long newVersion, long warehouseId)
             throws NoAliveBackendException, RpcException {
-        publishVersion(tablets, txnInfo, baseVersion, newVersion, null, warehouseId, null);
+        publishVersion(tablets, txnInfo, baseVersion, newVersion, null, warehouseId, null, false);
+    }
+
+    public static void publishVersion(@NotNull List<Tablet> tablets, TxnInfoPB txnInfo, long baseVersion,
+                                      long newVersion, long warehouseId, boolean cdcEnable)
+            throws NoAliveBackendException, RpcException {
+        publishVersion(tablets, txnInfo, baseVersion, newVersion, null, warehouseId, null, cdcEnable);
     }
 
     public static void publishVersionBatch(@NotNull List<Tablet> tablets, List<TxnInfoPB> txnInfos,
@@ -110,6 +116,18 @@ public class Utils {
                                            Map<ComputeNode, List<Long>> nodeToTablets,
                                            long warehouseId,
                                            Map<Long, Long> tabletRowNum)
+            throws NoAliveBackendException, RpcException {
+        publishVersionBatch(tablets, txnInfos, baseVersion, newVersion, compactionScores, nodeToTablets, warehouseId,
+                tabletRowNum, false);
+    }
+
+    public static void publishVersionBatch(@NotNull List<Tablet> tablets, List<TxnInfoPB> txnInfos,
+                                           long baseVersion, long newVersion,
+                                           Map<Long, Double> compactionScores,
+                                           Map<ComputeNode, List<Long>> nodeToTablets,
+                                           long warehouseId,
+                                           Map<Long, Long> tabletRowNum,
+                                           boolean cdcEnable)
             throws NoAliveBackendException, RpcException {
         if (nodeToTablets == null) {
             nodeToTablets = new HashMap<>();
@@ -152,6 +170,7 @@ public class Utils {
             if (!rebuildPindexTabletIds.isEmpty()) {
                 request.rebuildPindexTabletIds = rebuildPindexTabletIds;
             }
+            request.cdcEnable = cdcEnable;
 
             ComputeNode node = entry.getKey();
             LakeService lakeService = BrpcProxy.getLakeService(node.getHost(), node.getBrpcPort());
@@ -183,8 +202,16 @@ public class Utils {
                                       long newVersion, Map<Long, Double> compactionScores,
                                       long warehouseId, Map<Long, Long> tabletRowNums)
             throws NoAliveBackendException, RpcException {
+        publishVersion(tablets, txnInfo, baseVersion, newVersion, compactionScores, warehouseId, tabletRowNums, false);
+    }
+
+    public static void publishVersion(@NotNull List<Tablet> tablets, TxnInfoPB txnInfo, long baseVersion,
+                                      long newVersion, Map<Long, Double> compactionScores,
+                                      long warehouseId, Map<Long, Long> tabletRowNums, boolean cdcEnable)
+            throws NoAliveBackendException, RpcException {
         List<TxnInfoPB> txnInfos = Lists.newArrayList(txnInfo);
-        publishVersionBatch(tablets, txnInfos, baseVersion, newVersion, compactionScores, null, warehouseId, tabletRowNums);
+        publishVersionBatch(tablets, txnInfos, baseVersion, newVersion, compactionScores, null,
+                warehouseId, tabletRowNums, cdcEnable);
     }
 
     public static void publishLogVersion(@NotNull List<Tablet> tablets, TxnInfoPB txnInfo, long version, long warehouseId)

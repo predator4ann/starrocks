@@ -16,17 +16,27 @@
 
 #include <fmt/format.h>
 
-#include "gutil/strings/join.h"
+#include "column/column.h"
+#include "common/config.h"
+#include "fs/fs.h"
+#include "serde/column_array_serde.h"
+#include "storage/chunk_helper.h"
 #include "storage/lake/lake_primary_index.h"
 #include "storage/lake/lake_primary_key_recover.h"
 #include "storage/lake/meta_file.h"
+#include "storage/lake/rowset.h"
 #include "storage/lake/tablet.h"
 #include "storage/lake/tablet_metadata.h"
 #include "storage/lake/update_manager.h"
+#include "storage/primary_key_encoder.h"
+#include "storage/rowset/rowset_options.h"
+#include "storage/rowset/segment.h"
+#include "storage/rowset/segment_options.h"
+#include "storage/storage_engine.h"
 #include "testutil/sync_point.h"
-#include "util/dynamic_cache.h"
-#include "util/phmap/phmap_fwd_decl.h"
+#include "types/logical_type.h"
 #include "util/trace.h"
+#include "storage/lake/column_mode_partial_update_handler.h"
 
 namespace starrocks::lake {
 
@@ -92,13 +102,14 @@ Status apply_alter_meta_log(TabletMetadataPB* metadata, const TxnLogPB_OpAlterMe
 class PrimaryKeyTxnLogApplier : public TxnLogApplier {
 public:
     PrimaryKeyTxnLogApplier(const Tablet& tablet, MutableTabletMetadataPtr metadata, int64_t new_version,
-                            bool rebuild_pindex)
+                            bool rebuild_pindex, bool cdc_enable)
             : _tablet(tablet),
               _metadata(std::move(metadata)),
               _base_version(_metadata->version()),
               _new_version(new_version),
               _builder(_tablet, _metadata),
-              _rebuild_pindex(rebuild_pindex) {
+              _rebuild_pindex(rebuild_pindex),
+              _cdc_enable(cdc_enable) {
         _metadata->set_version(_new_version);
     }
 
@@ -248,6 +259,8 @@ private:
     }
 
     Status apply_write_log(const TxnLogPB_OpWrite& op_write, int64_t txn_id) {
+        int64_t start_time = MonotonicMillis();
+        
         // get lock to avoid gc
         _tablet.update_mgr()->lock_shard_pk_index_shard(_tablet.id());
         DeferOp defer([&]() { _tablet.update_mgr()->unlock_shard_pk_index_shard(_tablet.id()); });
@@ -257,13 +270,31 @@ private:
             return Status::OK();
         }
         RETURN_IF_ERROR(prepare_primary_index());
+        
+        int64_t publish_start = MonotonicMillis();
         if (is_column_mode_partial_update(op_write)) {
-            return _tablet.update_mgr()->publish_column_mode_partial_update(op_write, txn_id, _metadata, &_tablet,
-                                                                             _index_entry, &_builder, _base_version);
+            RETURN_IF_ERROR(_tablet.update_mgr()->publish_column_mode_partial_update(op_write, txn_id, _metadata, &_tablet,
+                                                                                     _index_entry, &_builder, _base_version));
         } else {
-            return _tablet.update_mgr()->publish_primary_key_tablet(op_write, txn_id, _metadata, &_tablet, _index_entry,
-                                                                    &_builder, _base_version);
+            RETURN_IF_ERROR(_tablet.update_mgr()->publish_primary_key_tablet(op_write, txn_id, _metadata, &_tablet, _index_entry,
+                                                                             &_builder, _base_version));
         }
+        int64_t publish_time = MonotonicMillis() - publish_start;
+
+        // Execute CDC processing
+        int64_t total_cdc_time = 0;
+        if (config::cdc_enable && _cdc_enable) {
+            ASSIGN_OR_RETURN(total_cdc_time, _tablet.update_mgr()->process_unified_cdc(op_write, txn_id, _metadata, &_tablet,
+                                                                                     _cdc_enable));                                                                       
+        }
+        
+        int64_t total_time = MonotonicMillis() - start_time;
+        double cdc_ratio = total_cdc_time * 100.0 / total_time;
+        double publish_ratio = publish_time * 100.0 / total_time;
+        LOG(INFO) << strings::Substitute("TXN timing: tablet_id=$0, txn_id=$1, total=$2ms, publish=$3ms($4%), cdc=$5ms($6%)", 
+                                        tablet_id, txn_id, total_time, publish_time, publish_ratio, total_cdc_time, cdc_ratio);  
+        
+        return Status::OK();
     }
 
     Status apply_compaction_log(const TxnLogPB_OpCompaction& op_compaction, int64_t txn_id) {
@@ -394,6 +425,7 @@ private:
     // True when finalize meta file success.
     bool _has_finalized = false;
     bool _rebuild_pindex = false;
+    bool _cdc_enable = false;
 };
 
 class NonPrimaryKeyTxnLogApplier : public TxnLogApplier {
@@ -653,9 +685,10 @@ private:
 };
 
 std::unique_ptr<TxnLogApplier> new_txn_log_applier(const Tablet& tablet, MutableTabletMetadataPtr metadata,
-                                                   int64_t new_version, bool rebuild_pindex) {
+                                                   int64_t new_version, bool rebuild_pindex,
+                                                   bool cdc_enable) {
     if (metadata->schema().keys_type() == PRIMARY_KEYS) {
-        return std::make_unique<PrimaryKeyTxnLogApplier>(tablet, std::move(metadata), new_version, rebuild_pindex);
+        return std::make_unique<PrimaryKeyTxnLogApplier>(tablet, std::move(metadata), new_version, rebuild_pindex, cdc_enable);
     }
     return std::make_unique<NonPrimaryKeyTxnLogApplier>(tablet, std::move(metadata), new_version);
 }

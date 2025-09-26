@@ -164,6 +164,10 @@ public class LakeTable extends OlapTable {
             }
         }
 
+        if (tableProperty != null && tableProperty.isCdcEnable()) {
+            properties.put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, "true");
+        }
+
         // storage volume
         StorageVolumeMgr svm = GlobalStateMgr.getCurrentState().getStorageVolumeMgr();
         properties.put(PropertyAnalyzer.PROPERTIES_STORAGE_VOLUME, svm.getStorageVolumeNameOfTable(id));

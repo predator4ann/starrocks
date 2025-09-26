@@ -46,6 +46,8 @@ import com.starrocks.catalog.OlapTable;
 import com.starrocks.catalog.PhysicalPartition;
 import com.starrocks.catalog.Replica;
 import com.starrocks.catalog.Replica.ReplicaState;
+import com.starrocks.catalog.Table;
+import com.starrocks.catalog.TableProperty;
 import com.starrocks.catalog.Tablet;
 import com.starrocks.common.Config;
 import com.starrocks.common.StarRocksException;
@@ -1018,6 +1020,23 @@ public class TransactionState implements Writable, GsonPreProcessable {
                     Config.enable_sync_publish,
                     this.getTransactionType(),
                     isVersionOverwrite());
+            
+            // Read table's CDC configuration and set it to the task
+            for (Long tableId : getTableIdList()) {
+                Database db = GlobalStateMgr.getCurrentState().getLocalMetastore().getDb(dbId);
+                if (db != null) {
+                    Table table = db.getTable(tableId);
+                    if (table instanceof OlapTable) {
+                        OlapTable olapTable = (OlapTable) table;
+                        TableProperty tableProperty = olapTable.getTableProperty();
+                        if (tableProperty != null) {
+                            task.setCdcEnable(tableProperty.isCdcEnable());
+                            break;
+                        }
+                    }
+                }
+            }
+            
             this.addPublishVersionTask(backendId, task);
             tasks.add(task);
         }

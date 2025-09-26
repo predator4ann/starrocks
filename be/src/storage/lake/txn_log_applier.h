@@ -46,6 +46,7 @@ protected:
 };
 
 std::unique_ptr<TxnLogApplier> new_txn_log_applier(const Tablet& tablet, MutableTabletMetadataPtr metadata,
-                                                   int64_t new_version, bool rebuild_pindex);
+                                                     int64_t new_version, bool rebuild_pindex,
+                                                     bool cdc_enable = false);
 
 } // namespace starrocks::lake
