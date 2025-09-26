@@ -292,7 +292,7 @@ private:
         double cdc_ratio = total_cdc_time * 100.0 / total_time;
         double publish_ratio = publish_time * 100.0 / total_time;
         LOG(INFO) << strings::Substitute("TXN timing: tablet_id=$0, txn_id=$1, total=$2ms, publish=$3ms($4%), cdc=$5ms($6%)", 
-                                        tablet_id, txn_id, total_time, publish_time, publish_ratio, total_cdc_time, cdc_ratio);  
+                                         _tablet.id(), txn_id, total_time, publish_time, publish_ratio, total_cdc_time, cdc_ratio);  
         
         return Status::OK();
     }
