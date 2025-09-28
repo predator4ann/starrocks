@@ -1683,6 +1683,10 @@ CONF_mBool(cdc_enable, "false");
 // Whether to stream CDC sending while collecting to reduce peak memory.
 // When enabled, we still preserve strict per-tablet ordering.
 CONF_mBool(cdc_streaming_send, "false");
+// Whether to use async Kafka writes in streaming mode for better performance.
+// When enabled, CDC data is sent to Kafka asynchronously during streaming,
+// but all writes are synchronized before version publishing.
+CONF_mBool(cdc_streaming_async_kafka, "true");
 // CDC Kafka configuration
 // Kafka broker list, comma separated
 CONF_String(cdc_kafka_brokers, "localhost:9092");
@@ -1712,14 +1716,8 @@ CONF_String(cdc_kafka_sasl_mechanism, "PLAIN");
 CONF_String(cdc_kafka_sasl_username, "");
 // Kafka SASL password
 CONF_String(cdc_kafka_sasl_password, "");
-// Kafka transactions to ensure atomic visibility of CDC per publish.
-CONF_Bool(cdc_kafka_enable_transactions, "false");
-// Kafka transaction timeout in milliseconds.
-CONF_Int32(cdc_kafka_txn_timeout_ms, "60000");
-// Size of Kafka producer pool for CDC. Each producer has a unique transactional.id.
+// Size of Kafka producer pool for CDC.
 CONF_Int32(cdc_kafka_pool_size, "4");
-// Optional prefix for transactional.id. If empty, a prefix based on hostname and pid is used.
-CONF_String(cdc_kafka_producer_id_prefix, "");
 
 // default batch size for simdjson lib
 CONF_mInt32(json_parse_many_batch_size, "1000000");

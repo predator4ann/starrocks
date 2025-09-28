@@ -19,6 +19,7 @@
 #include "column/column.h"
 #include "common/config.h"
 #include "fs/fs.h"
+#include "gutil/strings/join.h"
 #include "serde/column_array_serde.h"
 #include "storage/chunk_helper.h"
 #include "storage/lake/lake_primary_index.h"
@@ -609,7 +610,7 @@ private:
         LOG(INFO) << "Compaction finish. tablet: " << _metadata->id() << ", version: " << _metadata->version()
                   << ", cumulative point: " << _metadata->cumulative_point() << ", rowsets: ["
                   << JoinInts(rowset_ids, ",") << "]"
-                  << ", delete rowsets: [" << JoinInts(delete_rowset_ids, ",") + "]";
+                  << ", delete rowsets: [" << JoinInts(delete_rowset_ids, ",") << "]";
         return Status::OK();
     }
 
