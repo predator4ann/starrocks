@@ -108,26 +108,7 @@ Status CdcDataCollector::commit_transaction_data(const CdcTransactionData& colle
     if (!kafka_producer->is_ready()) {
         RETURN_IF_ERROR(kafka_producer->init());
     }
-    // If streaming+transactions mode, the transaction is managed in process_unified_cdc.
-    // Otherwise, perform a per-collector transactional send here.
-    if (config::cdc_kafka_enable_transactions && config::cdc_streaming_send) {
-        // Streaming mode should have already started and will commit at the end.
-        RETURN_IF_ERROR(send_to_kafka(collector));
-    } else {
-        if (config::cdc_kafka_enable_transactions) {
-            RETURN_IF_ERROR(kafka_producer->begin_transaction());
-        }
-        Status send_st = send_to_kafka(collector);
-        if (!send_st.ok()) {
-            if (config::cdc_kafka_enable_transactions) {
-                (void)kafka_producer->abort_transaction();
-            }
-            return send_st;
-        }
-        if (config::cdc_kafka_enable_transactions) {
-            RETURN_IF_ERROR(kafka_producer->commit_transaction());
-        }
-    }
+    RETURN_IF_ERROR(send_to_kafka(collector));
     
     return Status::OK();
 }
@@ -434,7 +415,16 @@ Status CdcDataCollector::send_operations_page(const CdcTransactionData& collecto
                                                       0, rows_in_current_message);
 
     std::string key = std::to_string(collector.tablet_id());
-    Status st = kafka_producer->send_sync(topic, key, json_data, config::cdc_kafka_timeout_ms);
+    
+    // Choose between async and sync based on configuration
+    Status st;
+    if (config::cdc_streaming_async_kafka) {
+        // Use async send with tracking for better performance
+        st = kafka_producer->send_async_with_tracking(topic, key, json_data, collector.tablet_id());
+    } else {
+        // Use sync send for comparison/debugging
+        st = kafka_producer->send_sync(topic, key, json_data, config::cdc_kafka_timeout_ms);
+    }
     return st;
 }
 

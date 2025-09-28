@@ -24,7 +24,89 @@
 
 namespace starrocks::lake {
 
-// Note: KafkaProducer is now only used within KafkaProducerPool, no singleton needed
+std::once_flag KafkaAsyncWriteTracker::_init_flag;
+std::unique_ptr<KafkaAsyncWriteTracker> KafkaAsyncWriteTracker::_instance;
+
+KafkaAsyncWriteTracker* KafkaAsyncWriteTracker::instance() {
+    std::call_once(_init_flag, []() {
+        _instance = std::unique_ptr<KafkaAsyncWriteTracker>(new KafkaAsyncWriteTracker());
+    });
+    return _instance.get();
+}
+
+void KafkaAsyncWriteTracker::track_async_write(int64_t tablet_id, std::shared_ptr<std::promise<Status>> promise) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    _pending_writes[tablet_id].push_back(promise);
+    VLOG(2) << "Tracking async Kafka write for tablet " << tablet_id << ", total pending: " << _pending_writes[tablet_id].size();
+}
+
+Status KafkaAsyncWriteTracker::wait_tablet_writes_complete(int64_t tablet_id, int timeout_ms) {
+    std::vector<std::shared_ptr<std::promise<Status>>> promises;
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        auto it = _pending_writes.find(tablet_id);
+        if (it != _pending_writes.end()) {
+            promises = std::move(it->second);
+            _pending_writes.erase(it);
+        }
+    }
+    
+    if (promises.empty()) {
+        VLOG(2) << "No pending Kafka writes for tablet " << tablet_id;
+        return Status::OK();
+    }
+    
+    LOG(INFO) << "Waiting for " << promises.size() << " async Kafka writes to complete for tablet " << tablet_id;
+    
+    // Wait for all async writes to complete
+    for (size_t i = 0; i < promises.size(); ++i) {
+        auto& promise = promises[i];
+        auto future = promise->get_future();
+        
+        // Poll Kafka producers while waiting to ensure callbacks are processed
+        const auto start_time = std::chrono::steady_clock::now();
+        while (future.wait_for(std::chrono::milliseconds(100)) == std::future_status::timeout) {
+            // Poll all producers to handle delivery reports
+            auto* producer_pool = KafkaProducerPool::instance();
+            for (int j = 0; j < config::cdc_kafka_pool_size; ++j) {
+                auto* producer = producer_pool->pick(tablet_id + j);
+                if (producer && producer->is_ready()) {
+                    producer->poll(50);  // Poll for 50ms
+                }
+            }
+            
+            // Check timeout
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - start_time).count();
+            if (elapsed >= timeout_ms) {
+                LOG(ERROR) << "Kafka async write timeout for tablet " << tablet_id << ", write " << (i + 1) << "/" << promises.size() << " after " << elapsed << "ms";
+                return Status::TimedOut("Kafka async write timeout for tablet " + std::to_string(tablet_id));
+            }
+        }
+        
+        auto status = future.get();
+        if (!status.ok()) {
+            LOG(ERROR) << "Kafka async write failed for tablet " << tablet_id << ", write " << (i + 1) << "/" << promises.size() << ": " << status.to_string();
+            return status;
+        }
+        VLOG(2) << "Kafka async write " << (i + 1) << "/" << promises.size() << " completed for tablet " << tablet_id;
+    }
+    
+    LOG(INFO) << "All " << promises.size() << " async Kafka writes completed for tablet " << tablet_id;
+    return Status::OK();
+}
+
+void KafkaAsyncWriteTracker::clear_tablet_writes(int64_t tablet_id) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    auto it = _pending_writes.find(tablet_id);
+    if (it != _pending_writes.end()) {
+        // Set all promises to error status
+        for (auto& promise : it->second) {
+            promise->set_value(Status::Aborted("Tablet writes cleared"));
+        }
+        _pending_writes.erase(it);
+    }
+}
 
 KafkaProducer::~KafkaProducer() {
     shutdown();
@@ -52,69 +134,7 @@ Status KafkaProducer::init() {
     
     return Status::OK();
 }
-Status KafkaProducer::init_transactions() {
-    if (_transactions_inited) {
-        return Status::OK();
-    }
-    std::lock_guard<std::mutex> lock(_mutex);
-    if (_transactions_inited) {
-        return Status::OK();
-    }
-    if (!_producer) {
-        return Status::InternalError("KafkaProducer not initialized");
-    }
-    
-    LOG(INFO) << "Starting Kafka transaction initialization with transactional.id: " << _transactional_id;
-    
-    // Initialize transactions - this call might block if Kafka has issues
-    LOG(INFO) << "Calling rd_kafka_init_transactions with timeout: " << config::cdc_kafka_txn_timeout_ms << "ms";
-    rd_kafka_error_t* kerr = rd_kafka_init_transactions(_producer, config::cdc_kafka_txn_timeout_ms);
-    if (kerr) {
-        std::string msg = rd_kafka_error_string(kerr);
-        rd_kafka_resp_err_t code = rd_kafka_error_code(kerr);
-        rd_kafka_error_destroy(kerr);
-        return Status::InternalError(strings::Substitute("init_transactions failed: $0 (code: $1)", msg, static_cast<int>(code)));
-    }
-    _transactions_inited = true;
-    LOG(INFO) << "Kafka transactions initialized successfully for transactional.id: " << _transactional_id;
-    return Status::OK();
-}
 
-Status KafkaProducer::begin_transaction() {
-    if (!config::cdc_kafka_enable_transactions) return Status::OK();
-    if (!_transactions_inited) return Status::InternalError("transactions not initialized");
-    rd_kafka_error_t* kerr = rd_kafka_begin_transaction(_producer);
-    if (kerr) {
-        std::string msg = rd_kafka_error_string(kerr);
-        rd_kafka_error_destroy(kerr);
-        return Status::InternalError(strings::Substitute("begin_transaction failed: $0", msg));
-    }
-    return Status::OK();
-}
-
-Status KafkaProducer::commit_transaction() {
-    if (!config::cdc_kafka_enable_transactions) return Status::OK();
-    if (!_transactions_inited) return Status::InternalError("transactions not initialized");
-    rd_kafka_error_t* kerr = rd_kafka_commit_transaction(_producer, config::cdc_kafka_txn_timeout_ms);
-    if (kerr) {
-        std::string msg = rd_kafka_error_string(kerr);
-        rd_kafka_error_destroy(kerr);
-        return Status::InternalError(strings::Substitute("commit_transaction failed: $0", msg));
-    }
-    return Status::OK();
-}
-
-Status KafkaProducer::abort_transaction() {
-    if (!config::cdc_kafka_enable_transactions) return Status::OK();
-    if (!_transactions_inited) return Status::InternalError("transactions not initialized");
-    rd_kafka_error_t* kerr = rd_kafka_abort_transaction(_producer, config::cdc_kafka_txn_timeout_ms);
-    if (kerr) {
-        std::string msg = rd_kafka_error_string(kerr);
-        rd_kafka_error_destroy(kerr);
-        return Status::InternalError(strings::Substitute("abort_transaction failed: $0", msg));
-    }
-    return Status::OK();
-}
 
 Status KafkaProducer::init_config() {
     char errstr[512];
@@ -171,26 +191,6 @@ Status KafkaProducer::init_config() {
         return Status::InternalError(strings::Substitute("Failed to set message.timeout.ms: $0", errstr));
     }
 
-    // Set transactional id when transactions enabled AND transactional.id is set
-    if (config::cdc_kafka_enable_transactions && !_transactional_id.empty()) {
-        // Ensure acks=all when enabling transactions (required for idempotence)
-        if (rd_kafka_conf_set(_conf, "acks", "all", errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-            return Status::InternalError(strings::Substitute("Failed to set acks=all for transactions: $0", errstr));
-        }
-        
-        // Set transactional.id
-        if (rd_kafka_conf_set(_conf, "transactional.id", _transactional_id.c_str(), errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-            return Status::InternalError(strings::Substitute("Failed to set transactional.id: $0", errstr));
-        }
-        LOG(INFO) << "Set Kafka transactional.id: " << _transactional_id;
-        
-        // Enable idempotence (required for transactions)
-        if (rd_kafka_conf_set(_conf, "enable.idempotence", "true", errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-            return Status::InternalError(strings::Substitute("Failed to set enable.idempotence: $0", errstr));
-        }
-        
-        LOG(INFO) << "Kafka transactions configuration completed: acks=all, enable.idempotence=true";
-    }
     
     // Set security protocol
     if (rd_kafka_conf_set(_conf, "security.protocol", config::cdc_kafka_security_protocol.c_str(), 
@@ -365,10 +365,57 @@ Status KafkaProducer::send_async(const std::string& topic, const std::string& ke
     return Status::OK();
 }
 
+Status KafkaProducer::send_async_with_tracking(const std::string& topic, const std::string& key, 
+                                               const std::string& message, int64_t tablet_id) {
+    if (!_initialized.load()) {
+        return Status::InternalError("KafkaProducer not initialized");
+    }
+    
+    if (_shutdown.load()) {
+        return Status::InternalError("KafkaProducer is shutdown");
+    }
+    
+    // Create promise for tracking
+    auto promise = std::make_shared<std::promise<Status>>();
+    KafkaAsyncWriteTracker::instance()->track_async_write(tablet_id, promise);
+    
+    // Create async context - use raw pointer to avoid shared_ptr lifecycle issues
+    // The context will be deleted in the delivery callback
+    auto* async_ctx = new AsyncContext();
+    async_ctx->promise = promise;
+    
+    rd_kafka_resp_err_t err = rd_kafka_producev(
+        _producer,
+        RD_KAFKA_V_TOPIC(topic.c_str()),
+        RD_KAFKA_V_KEY(key.c_str(), key.size()),
+        RD_KAFKA_V_VALUE(const_cast<void*>(static_cast<const void*>(message.c_str())), message.size()),
+        RD_KAFKA_V_OPAQUE(async_ctx),
+        RD_KAFKA_V_END
+    );
+    
+    if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+        promise->set_value(Status::InternalError(strings::Substitute("Failed to produce message: $0", 
+                                                                    rd_kafka_err2str(err))));
+        delete async_ctx;  // Clean up context if sending failed
+        return Status::InternalError(strings::Substitute("Failed to produce message: $0", 
+                                                         rd_kafka_err2str(err)));
+    }
+    
+    rd_kafka_poll(_producer, 0);
+    
+    return Status::OK();
+}
+
+void KafkaProducer::poll(int timeout_ms) {
+    if (_producer && _initialized.load() && !_shutdown.load()) {
+        rd_kafka_poll(_producer, timeout_ms);
+    }
+}
+
 std::string KafkaProducer::get_topic_name() const {
     return strings::Substitute("$0", config::cdc_kafka_topic);
 }
-// -------------------- KafkaProducerPool --------------------
+
 std::once_flag KafkaProducerPool::_init_flag;
 std::unique_ptr<KafkaProducerPool> KafkaProducerPool::_instance;
 
@@ -384,22 +431,9 @@ Status KafkaProducerPool::ensure_size(int size) {
     if (size <= 0) size = 1;
     if ((int)_pool.size() >= size) return Status::OK();
     _pool.reserve(size);
-    // Build a unique prefix for transactional.id if not given
-    std::string prefix = config::cdc_kafka_producer_id_prefix;
-    if (prefix.empty()) {
-        char host[256] = {0};
-        gethostname(host, sizeof(host));
-        prefix = strings::Substitute("$0-$1", host, getpid());
-    }
     for (int i = (int)_pool.size(); i < size; ++i) {
         auto prod = std::unique_ptr<KafkaProducer>(new KafkaProducer());
-        // Generate unique transactional.id for this producer instance
-        std::string my_tid = strings::Substitute("$0-$1", prefix, i);
-        prod->set_transactional_id(my_tid);
         RETURN_IF_ERROR(prod->init());
-        if (config::cdc_kafka_enable_transactions) {
-            RETURN_IF_ERROR(prod->init_transactions());
-        }
         _pool.emplace_back(std::move(prod));
     }
     return Status::OK();
@@ -436,12 +470,34 @@ void KafkaProducerPool::shutdown() {
 void KafkaProducer::delivery_report_cb(rd_kafka_t* rk, const rd_kafka_message_t* rkmessage, void* opaque) {
     // For per-message opaque passed via RD_KAFKA_V_OPAQUE, retrieve from rkmessage->_private
     if (rkmessage && rkmessage->_private) {
-        auto* sync_ctx = static_cast<SyncContext*>(rkmessage->_private);
-        if (sync_ctx) {
-            std::lock_guard<std::mutex> lock(sync_ctx->mutex);
-            sync_ctx->error = rkmessage->err;
-            sync_ctx->completed = true;
-            sync_ctx->cv.notify_one();
+        auto* base_ctx = static_cast<BaseContext*>(rkmessage->_private);
+        if (base_ctx) {
+            switch (base_ctx->type) {
+                case SYNC_CONTEXT: {
+                    auto* sync_ctx = static_cast<SyncContext*>(base_ctx);
+                    std::lock_guard<std::mutex> lock(sync_ctx->mutex);
+                    sync_ctx->error = rkmessage->err;
+                    sync_ctx->completed = true;
+                    sync_ctx->cv.notify_one();
+                    break;
+                }
+                case ASYNC_CONTEXT: {
+                    auto* async_ctx = static_cast<AsyncContext*>(base_ctx);
+                    if (async_ctx->promise) {
+                        if (rkmessage->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
+                            async_ctx->promise->set_value(Status::OK());
+                        } else {
+                            async_ctx->promise->set_value(Status::InternalError(
+                                strings::Substitute("Kafka message delivery failed: $0", rd_kafka_err2str(rkmessage->err))));
+                        }
+                    }
+                    delete async_ctx;  // Clean up the context
+                    break;
+                }
+                default:
+                    LOG(WARNING) << "Unknown context type in Kafka delivery callback: " << base_ctx->type;
+                    break;
+            }
         }
     }
     

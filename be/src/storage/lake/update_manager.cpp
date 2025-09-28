@@ -1267,40 +1267,14 @@ StatusOr<int64_t> UpdateManager::process_unified_cdc(const TxnLogPB_OpWrite& op_
             .container = rssid_fileinfo_container,
     };
     
-    // Begin Kafka transaction early when streaming send is enabled to cover the whole CDC window
-    if (config::cdc_kafka_enable_transactions && config::cdc_streaming_send) {
-        auto* prod = KafkaProducerPool::instance()->pick(tablet->id());
-        if (prod == nullptr) {
-            return Status::InternalError("Failed to pick Kafka producer from pool");
-        }
-        RETURN_IF_ERROR(prod->begin_transaction());
-    }
-
     // Collect CDC data for deletions
     RETURN_IF_ERROR(_collect_delete_cdc_data(op_write, params, txn_id, metadata, cdc_collector.get(), total_cdc_time));
     
     // Collect CDC data for non-delete operations
     RETURN_IF_ERROR(_collect_segment_cdc_data(op_write, params, txn_id, metadata, cdc_collector.get(), total_cdc_time));
     
-    // Commit CDC transaction data: if streaming+transactions, send has happened already; just commit here.
     if (cdc_collector->has_data()) {
-        if (config::cdc_kafka_enable_transactions && config::cdc_streaming_send) {
-            auto* prod = KafkaProducerPool::instance()->pick(tablet->id());
-            if (prod == nullptr) {
-                return Status::InternalError("Failed to pick Kafka producer from pool");
-            }
-            RETURN_IF_ERROR(prod->commit_transaction());
-        } else {
-            RETURN_IF_ERROR(_cdc_collector->commit_transaction_data(*cdc_collector));
-        }
-    } else {
-        // No data: if we began a txn, abort to clean state
-        if (config::cdc_kafka_enable_transactions && config::cdc_streaming_send) {
-            auto* prod = KafkaProducerPool::instance()->pick(tablet->id());
-            if (prod) {
-                (void)prod->abort_transaction();
-            }
-        }
+        RETURN_IF_ERROR(_cdc_collector->commit_transaction_data(*cdc_collector));
     }
     
     return total_cdc_time;

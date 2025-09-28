@@ -14,10 +14,12 @@
 
 #include "storage/lake/transactions.h"
 
+#include "common/config.h"
 #include "fs/fs_util.h"
 #include "gen_cpp/lake_types.pb.h"
 #include "gutil/strings/join.h"
 #include "runtime/exec_env.h"
+#include "storage/lake/kafka_producer.h"
 #include "storage/lake/metacache.h"
 #include "storage/lake/replication_txn_manager.h"
 #include "storage/lake/tablet.h"
@@ -400,6 +402,13 @@ StatusOr<TabletMetadataPtr> publish_version(TabletManager* tablet_mgr, int64_t t
 
             tablet_mgr->metacache()->erase(vlog_path);
         }
+    }
+
+    // Wait for all async Kafka writes to complete before saving new metadata to ensure strong consistency
+    if (cdc_enable && config::cdc_streaming_send && config::cdc_streaming_async_kafka) {
+        LOG(INFO) << "Waiting for async Kafka writes to complete for tablet " << tablet_id;
+        RETURN_IF_ERROR(KafkaAsyncWriteTracker::instance()->wait_tablet_writes_complete(tablet_id));
+        LOG(INFO) << "All async Kafka writes completed for tablet " << tablet_id;
     }
 
     // Save new metadata
