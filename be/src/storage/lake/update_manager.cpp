@@ -374,8 +374,7 @@ Status UpdateManager::_write_segment_for_upsert(const TxnLogPB_OpWrite& op_write
     {
         FileInfo info;
         info.path = op_write.rowset().segments(seg);
-        if (seg < op_write.rowset().bundle_file_offsets_size()) {
-            info.bundle_file_offset = op_write.rowset().bundle_file_offsets(seg);
+        if (seg < op_write.rowset().segment_size_size()) {
             info.size = op_write.rowset().segment_size(seg);
         }
         if (seg < op_write.rowset().segment_encryption_metas_size()) {
@@ -384,7 +383,6 @@ Status UpdateManager::_write_segment_for_upsert(const TxnLogPB_OpWrite& op_write
 
         FileInfo file_info{.path = tablet->segment_location(info.path), .encryption_meta = info.encryption_meta};
         if (info.size.has_value()) file_info.size = info.size;
-        if (info.bundle_file_offset.has_value()) file_info.bundle_file_offset = info.bundle_file_offset;
 
         ASSIGN_OR_RETURN(auto segment, Segment::open(fs, file_info, seg, tschema));
         RandomAccessFileOptions opts;
@@ -395,7 +393,7 @@ Status UpdateManager::_write_segment_for_upsert(const TxnLogPB_OpWrite& op_write
         ColumnIteratorOptions iter_opts;
         OlapReaderStatistics stats;
         iter_opts.stats = &stats;
-        ASSIGN_OR_RETURN(auto raf, fs->new_random_access_file_with_bundling(opts, file_info));
+        ASSIGN_OR_RETURN(auto raf, fs->new_random_access_file(opts, file_info));
         iter_opts.read_file = raf.get();
 
         for (uint32_t cid : update_cids) {
