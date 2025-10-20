@@ -58,22 +58,24 @@ Status KafkaAsyncWriteTracker::wait_tablet_writes_complete(int64_t tablet_id, in
     
     LOG(INFO) << "Waiting for " << promises.size() << " async Kafka writes to complete for tablet " << tablet_id;
     
+    // Get the specific producer for this tablet
+    auto* producer_pool = KafkaProducerPool::instance();
+    auto* producer = producer_pool->pick(tablet_id);
+    if (!producer || !producer->is_ready()) {
+        LOG(ERROR) << "Producer not ready for tablet " << tablet_id;
+        return Status::InternalError("Producer not ready");
+    }
+    
     // Wait for all async writes to complete
     for (size_t i = 0; i < promises.size(); ++i) {
         auto& promise = promises[i];
         auto future = promise->get_future();
         
-        // Poll Kafka producers while waiting to ensure callbacks are processed
+        // Poll ONLY the producer for this tablet to handle delivery reports
         const auto start_time = std::chrono::steady_clock::now();
-        while (future.wait_for(std::chrono::milliseconds(100)) == std::future_status::timeout) {
-            // Poll all producers to handle delivery reports
-            auto* producer_pool = KafkaProducerPool::instance();
-            for (int j = 0; j < config::cdc_kafka_pool_size; ++j) {
-                auto* producer = producer_pool->pick(tablet_id + j);
-                if (producer && producer->is_ready()) {
-                    producer->poll(50);  // Poll for 50ms
-                }
-            }
+        while (future.wait_for(std::chrono::milliseconds(10)) == std::future_status::timeout) {
+            // Poll only the relevant producer (not the entire pool)
+            producer->poll(10);  // Poll for 10ms
             
             // Check timeout
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -401,7 +403,12 @@ Status KafkaProducer::send_async_with_tracking(const std::string& topic, const s
                                                          rd_kafka_err2str(err)));
     }
     
-    rd_kafka_poll(_producer, 0);
+    // Poll multiple times to actively drive message sending to network
+    // This is critical for async performance - ensures messages are actually sent
+    // rather than just queued in librdkafka's internal buffer
+    for (int i = 0; i < 3; ++i) {
+        rd_kafka_poll(_producer, 1);  // 1ms timeout per poll
+    }
     
     return Status::OK();
 }
