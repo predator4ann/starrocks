@@ -1683,10 +1683,6 @@ CONF_mBool(cdc_enable, "false");
 // Whether to stream CDC sending while collecting to reduce peak memory.
 // When enabled, we still preserve strict per-tablet ordering.
 CONF_mBool(cdc_streaming_send, "false");
-// Whether to use async Kafka writes in streaming mode for better performance.
-// When enabled, CDC data is sent to Kafka asynchronously during streaming,
-// but all writes are synchronized before version publishing.
-CONF_mBool(cdc_streaming_async_kafka, "true");
 // CDC Kafka configuration
 // Kafka broker list, comma separated
 CONF_String(cdc_kafka_brokers, "localhost:9092");

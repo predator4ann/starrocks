@@ -19,10 +19,6 @@
 #include <mutex>
 #include <atomic>
 #include <condition_variable>
-#include <unordered_map>
-#include <vector>
-#include <future>
-#include <chrono>
 #include <librdkafka/rdkafka.h>
 
 #include "common/status.h"
@@ -30,30 +26,6 @@
 namespace starrocks::lake {
 
 class KafkaProducerPool;
-
-// Tracker for async Kafka writes to ensure all writes complete before publish_version
-class KafkaAsyncWriteTracker {
-public:
-    static KafkaAsyncWriteTracker* instance();
-    
-    // Track an async write for a tablet
-    void track_async_write(int64_t tablet_id, std::shared_ptr<std::promise<Status>> promise);
-    
-    // Wait for all async writes of a tablet to complete
-    Status wait_tablet_writes_complete(int64_t tablet_id, int timeout_ms = 30000);
-    
-    // Clear all pending writes for a tablet (used when errors occur)
-    void clear_tablet_writes(int64_t tablet_id);
-
-private:
-    KafkaAsyncWriteTracker() = default;
-    
-    std::mutex _mutex;
-    std::unordered_map<int64_t, std::vector<std::shared_ptr<std::promise<Status>>>> _pending_writes;
-    
-    static std::once_flag _init_flag;
-    static std::unique_ptr<KafkaAsyncWriteTracker> _instance;
-};
 
 // Kafka producer for CDC data publishing (used within KafkaProducerPool)
 class KafkaProducer {
@@ -70,18 +42,8 @@ public:
     Status send_sync(const std::string& topic, const std::string& key, 
                      const std::string& message, int timeout_ms = -1);
     
-    Status send_async(const std::string& topic, const std::string& key, 
-                      const std::string& message);
-    
-    // Send message asynchronously with tracking for a specific tablet
-    Status send_async_with_tracking(const std::string& topic, const std::string& key, 
-                                   const std::string& message, int64_t tablet_id);
-    
     // Check if producer is initialized and ready
     bool is_ready() const { return _initialized.load(); }
-    
-    // Poll for delivery reports (needed for async operations)
-    void poll(int timeout_ms = 0);
     
     // Get topic name
     std::string get_topic_name() const;
@@ -119,28 +81,12 @@ private:
     
     mutable std::mutex _mutex;
     
-    // Base context with type identification
-    enum ContextType { SYNC_CONTEXT = 1, ASYNC_CONTEXT = 2 };
-    
-    struct BaseContext {
-        ContextType type;
-        explicit BaseContext(ContextType t) : type(t) {}
-        virtual ~BaseContext() = default;
-    };
-    
     // Synchronous send support
-    struct SyncContext : public BaseContext {
-        SyncContext() : BaseContext(SYNC_CONTEXT) {}
+    struct SyncContext {
         std::mutex mutex;
         std::condition_variable cv;
         bool completed{false};
         rd_kafka_resp_err_t error{RD_KAFKA_RESP_ERR_NO_ERROR};
-    };
-    
-    // Asynchronous send support with tracking
-    struct AsyncContext : public BaseContext {
-        AsyncContext() : BaseContext(ASYNC_CONTEXT) {}
-        std::shared_ptr<std::promise<Status>> promise;
     };
 };
 

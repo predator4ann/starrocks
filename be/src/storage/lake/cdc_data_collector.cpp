@@ -358,6 +358,17 @@ Status CdcDataCollector::send_to_kafka(const CdcTransactionData& collector) {
                                                           current_page + 1, total_pages, 
                                                           total_rows, rows_in_current_message);
         
+        // Check message size before sending
+        size_t message_size = json_data.size();
+        size_t max_message_size = static_cast<size_t>(config::cdc_kafka_max_message_size);
+        if (message_size > max_message_size) {
+            LOG(ERROR) << strings::Substitute("CDC message size ($0 bytes) exceeds limit ($1 bytes) for tablet=$2, txn=$3, page=$4/$5",
+                                             message_size, max_message_size, collector.tablet_id(), collector.txn_id(),
+                                             current_page + 1, total_pages);
+            return Status::InternalError(strings::Substitute("Message size $0 exceeds Kafka limit $1", 
+                                                            message_size, max_message_size));
+        }
+        
         // Generate message key using tablet_id
         std::string key = std::to_string(collector.tablet_id());
         
@@ -368,7 +379,7 @@ Status CdcDataCollector::send_to_kafka(const CdcTransactionData& collector) {
             LOG(INFO) << strings::Substitute("CDC page sent to Kafka: tablet_id=$0, txn_id=$1, "
                                             "page=$2/$3, rows=$4, data_size=$5", 
                                             collector.tablet_id(), collector.txn_id(), 
-                                            current_page + 1, total_pages, rows_in_current_message, json_data.size());
+                                            current_page + 1, total_pages, rows_in_current_message, message_size);
             VLOG(2) << "CDC JSON page [" << (current_page + 1) << "/" << total_pages << "]: " << json_data;
         } else {
             LOG(ERROR) << strings::Substitute("Failed to send CDC page to Kafka: tablet_id=$0, txn_id=$1, "
@@ -414,17 +425,25 @@ Status CdcDataCollector::send_operations_page(const CdcTransactionData& collecto
                                                       1, 1,  // No pagination for streaming operations
                                                       0, rows_in_current_message);
 
+    // Check message size before sending
+    size_t message_size = json_data.size();
+    size_t max_message_size = static_cast<size_t>(config::cdc_kafka_max_message_size);
+    if (message_size > max_message_size) {
+        LOG(ERROR) << strings::Substitute("CDC message size ($0 bytes) exceeds limit ($1 bytes) for tablet=$2, txn=$3",
+                                         message_size, max_message_size, collector.tablet_id(), collector.txn_id());
+        return Status::InternalError(strings::Substitute("Message size $0 exceeds Kafka limit $1", 
+                                                        message_size, max_message_size));
+    }
+
     std::string key = std::to_string(collector.tablet_id());
     
-    // Choose between async and sync based on configuration
-    Status st;
-    if (config::cdc_streaming_async_kafka) {
-        // Use async send with tracking for better performance
-        st = kafka_producer->send_async_with_tracking(topic, key, json_data, collector.tablet_id());
-    } else {
-        // Use sync send for comparison/debugging
-        st = kafka_producer->send_sync(topic, key, json_data, config::cdc_kafka_timeout_ms);
+    Status st = kafka_producer->send_sync(topic, key, json_data, config::cdc_kafka_timeout_ms);
+    
+    if (st.ok()) {
+        VLOG(2) << strings::Substitute("CDC page sent: tablet=$0, txn=$1, size=$2 bytes, rows=$3",
+                                      collector.tablet_id(), collector.txn_id(), message_size, rows_in_current_message);
     }
+    
     return st;
 }
 
