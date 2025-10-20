@@ -520,12 +520,14 @@ Status UpdateManager::_handle_column_upsert_mode(const TxnLogPB_OpWrite& op_writ
             .tablet = tablet,
             .container = rssid_fileinfo_container,
     };
-    RowsetUpdateState state;
+    // Create state entry for memory tracking
+    auto state_entry = _update_state_cache.get_or_create(cache_key(tablet->id(), txn_id));
+    state_entry->update_expire_time(MonotonicMillis() + get_cache_expire_ms());
+    DeferOp remove_state_entry([&] { _update_state_cache.remove(state_entry); });
+    
+    RowsetUpdateState& state = state_entry->value();
     state.init(params);
-    for (uint32_t segment_id = 0; segment_id < op_write.rowset().segments_size(); segment_id++) {
-        RETURN_IF_ERROR(state.load_segment(segment_id, params, base_version, false /*resolve*/, false));
-    }
-
+    
     auto tschema = params.tablet_schema;
     std::vector<uint32_t> pk_cids;
     for (size_t i = 0; i < tschema->num_key_columns(); i++) pk_cids.push_back((uint32_t)i);
@@ -547,7 +549,13 @@ Status UpdateManager::_handle_column_upsert_mode(const TxnLogPB_OpWrite& op_writ
     TxnLogPB_OpWrite new_rows_op;
     uint64_t total_rows = 0;
     std::map<uint32_t, size_t> segment_id_to_add_dels_new_acc;
+    
+    // Process segments one by one and release memory immediately to reduce peak memory usage
     for (uint32_t seg = 0; seg < op_write.rowset().segments_size(); ++seg) {
+        // Load segment on demand
+        RETURN_IF_ERROR(state.load_segment(seg, params, base_version, false /*resolve*/, false));
+        _update_state_cache.update_object_size(state_entry, state.memory_usage());
+        
         const auto& cps = state.parital_update_states(seg);
         // use src_rss_rowids == UINT64_MAX to detect insert_rowids
         std::vector<uint32_t> insert_rowids;
@@ -555,14 +563,19 @@ Status UpdateManager::_handle_column_upsert_mode(const TxnLogPB_OpWrite& op_writ
         for (uint32_t i = 0; i < cps.src_rss_rowids.size(); ++i) {
             if (cps.src_rss_rowids[i] == UINT64_MAX) insert_rowids.push_back(i);
         }
-        if (insert_rowids.empty()) continue;
+        
+        if (!insert_rowids.empty()) {
+            ChunkPtr full_chunk;
+            RETURN_IF_ERROR(_write_segment_for_upsert(op_write, tschema, tablet, fs, txn_id, seg, insert_rowids,
+                                                      update_cids, &new_rows_op, &total_rows, &full_chunk));
 
-        ChunkPtr full_chunk;
-        RETURN_IF_ERROR(_write_segment_for_upsert(op_write, tschema, tablet, fs, txn_id, seg, insert_rowids,
-                                                  update_cids, &new_rows_op, &total_rows, &full_chunk));
-
-        RETURN_IF_ERROR(_handle_upsert_index_conflicts(metadata, index, builder, pkey_schema, rowset_id,
-                                                       new_rows_op, full_chunk, &segment_id_to_add_dels_new_acc));
+            RETURN_IF_ERROR(_handle_upsert_index_conflicts(metadata, index, builder, pkey_schema, rowset_id,
+                                                           new_rows_op, full_chunk, &segment_id_to_add_dels_new_acc));
+        }
+        
+        // Release segment memory immediately after processing
+        state.release_segment(seg);
+        _update_state_cache.update_object_size(state_entry, state.memory_usage());
         }
         new_rows_op.mutable_rowset()->set_num_rows(total_rows);
         new_rows_op.mutable_rowset()->set_data_size(0);
