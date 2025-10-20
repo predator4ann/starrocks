@@ -448,8 +448,6 @@ Status RowsetUpdateState::_prepare_partial_update_states(uint32_t segment_id, co
 
     // For COLUMN_UPSERT_MODE, skip reading column values to save memory
     if (is_column_upsert_mode) {
-        LOG(INFO) << "Skip reading column values for COLUMN_UPSERT_MODE, tablet_id=" << params.tablet->id() 
-                  << ", segment_id=" << segment_id;
         return Status::OK();
     }
     
