@@ -565,28 +565,36 @@ Status UpdateManager::_handle_column_upsert_mode(const TxnLogPB_OpWrite& op_writ
         }
         
         if (!insert_rowids.empty()) {
-            ChunkPtr full_chunk;
-            RETURN_IF_ERROR(_write_segment_for_upsert(op_write, tschema, tablet, fs, txn_id, seg, insert_rowids,
-                                                      update_cids, &new_rows_op, &total_rows, &full_chunk));
+            // Process insert rowids in batches to avoid memory overflow
+            const size_t batch_size = config::vector_chunk_size;
+            for (size_t batch_start = 0; batch_start < insert_rowids.size(); batch_start += batch_size) {
+                size_t batch_end = std::min(batch_start + batch_size, insert_rowids.size());
+                std::vector<uint32_t> batch_insert_rowids(insert_rowids.begin() + batch_start,
+                                                         insert_rowids.begin() + batch_end);
 
-            RETURN_IF_ERROR(_handle_upsert_index_conflicts(metadata, index, builder, pkey_schema, rowset_id,
-                                                           new_rows_op, full_chunk, &segment_id_to_add_dels_new_acc));
+                ChunkPtr full_chunk;
+                RETURN_IF_ERROR(_write_segment_for_upsert(op_write, tschema, tablet, fs, txn_id, seg, batch_insert_rowids,
+                                                          update_cids, &new_rows_op, &total_rows, &full_chunk));
+
+                RETURN_IF_ERROR(_handle_upsert_index_conflicts(metadata, index, builder, pkey_schema, rowset_id,
+                                                               new_rows_op, full_chunk, &segment_id_to_add_dels_new_acc));
+            }
         }
-        
+
         // Release segment memory immediately after processing
         state.release_segment(seg);
         _update_state_cache.update_object_size(state_entry, state.memory_usage());
+    }
+    new_rows_op.mutable_rowset()->set_num_rows(total_rows);
+    new_rows_op.mutable_rowset()->set_data_size(0);
+    new_rows_op.mutable_rowset()->set_overlapped(new_rows_op.rowset().segments_size() > 1);
+    if (new_rows_op.rowset().segments_size() > 0) {
+        builder->apply_opwrite(new_rows_op, {}, {});
+        if (!segment_id_to_add_dels_new_acc.empty()) {
+            (void)builder->update_num_del_stat(segment_id_to_add_dels_new_acc);
+            segment_id_to_add_dels_new_acc.clear();
         }
-        new_rows_op.mutable_rowset()->set_num_rows(total_rows);
-        new_rows_op.mutable_rowset()->set_data_size(0);
-        new_rows_op.mutable_rowset()->set_overlapped(new_rows_op.rowset().segments_size() > 1);
-        if (new_rows_op.rowset().segments_size() > 0) {
-            builder->apply_opwrite(new_rows_op, {}, {});
-            if (!segment_id_to_add_dels_new_acc.empty()) {
-                (void)builder->update_num_del_stat(segment_id_to_add_dels_new_acc);
-                segment_id_to_add_dels_new_acc.clear();
-            }
-        }
+    }
 
     return Status::OK();
 }
