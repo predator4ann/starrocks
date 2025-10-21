@@ -653,8 +653,10 @@ Status UpdateManager::publish_column_mode_partial_update(const TxnLogPB_OpWrite&
             .container = rssid_fileinfo_container,
     };
 
-    ColumnModePartialUpdateHandler handler(base_version, txn_id, _update_mem_tracker);
-    RETURN_IF_ERROR(handler.execute(params, builder));
+    {
+        ColumnModePartialUpdateHandler handler(base_version, txn_id, _update_mem_tracker);
+        RETURN_IF_ERROR(handler.execute(params, builder));
+    }
 
     const uint32_t rowset_id = metadata->next_rowset_id();
     const uint32_t del_rebuild_rssid = rowset_id + std::max(op_write.rowset().segments_size(), 1) - 1;
