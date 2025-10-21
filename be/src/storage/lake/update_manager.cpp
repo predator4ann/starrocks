@@ -566,7 +566,7 @@ Status UpdateManager::_handle_column_upsert_mode(const TxnLogPB_OpWrite& op_writ
         
         if (!insert_rowids.empty()) {
             // Process insert rowids in batches to avoid memory overflow
-            const size_t batch_size = config::vector_chunk_size;
+            const size_t batch_size = config::column_mode_partial_update_batch_size;
             for (size_t batch_start = 0; batch_start < insert_rowids.size(); batch_start += batch_size) {
                 size_t batch_end = std::min(batch_start + batch_size, insert_rowids.size());
                 std::vector<uint32_t> batch_insert_rowids(insert_rowids.begin() + batch_start,
