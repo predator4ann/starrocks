@@ -24,92 +24,6 @@
 
 namespace starrocks::lake {
 
-std::once_flag KafkaAsyncWriteTracker::_init_flag;
-std::unique_ptr<KafkaAsyncWriteTracker> KafkaAsyncWriteTracker::_instance;
-
-KafkaAsyncWriteTracker* KafkaAsyncWriteTracker::instance() {
-    std::call_once(_init_flag, []() {
-        _instance = std::unique_ptr<KafkaAsyncWriteTracker>(new KafkaAsyncWriteTracker());
-    });
-    return _instance.get();
-}
-
-void KafkaAsyncWriteTracker::track_async_write(int64_t tablet_id, std::shared_ptr<std::promise<Status>> promise) {
-    std::lock_guard<std::mutex> lock(_mutex);
-    _pending_writes[tablet_id].push_back(promise);
-    VLOG(2) << "Tracking async Kafka write for tablet " << tablet_id << ", total pending: " << _pending_writes[tablet_id].size();
-}
-
-Status KafkaAsyncWriteTracker::wait_tablet_writes_complete(int64_t tablet_id, int timeout_ms) {
-    std::vector<std::shared_ptr<std::promise<Status>>> promises;
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        auto it = _pending_writes.find(tablet_id);
-        if (it != _pending_writes.end()) {
-            promises = std::move(it->second);
-            _pending_writes.erase(it);
-        }
-    }
-    
-    if (promises.empty()) {
-        VLOG(2) << "No pending Kafka writes for tablet " << tablet_id;
-        return Status::OK();
-    }
-    
-    LOG(INFO) << "Waiting for " << promises.size() << " async Kafka writes to complete for tablet " << tablet_id;
-    
-    // Get the specific producer for this tablet
-    auto* producer_pool = KafkaProducerPool::instance();
-    auto* producer = producer_pool->pick(tablet_id);
-    if (!producer || !producer->is_ready()) {
-        LOG(ERROR) << "Producer not ready for tablet " << tablet_id;
-        return Status::InternalError("Producer not ready");
-    }
-    
-    // Wait for all async writes to complete
-    for (size_t i = 0; i < promises.size(); ++i) {
-        auto& promise = promises[i];
-        auto future = promise->get_future();
-        
-        // Poll ONLY the producer for this tablet to handle delivery reports
-        const auto start_time = std::chrono::steady_clock::now();
-        while (future.wait_for(std::chrono::milliseconds(10)) == std::future_status::timeout) {
-            // Poll only the relevant producer (not the entire pool)
-            producer->poll(10);  // Poll for 10ms
-            
-            // Check timeout
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - start_time).count();
-            if (elapsed >= timeout_ms) {
-                LOG(ERROR) << "Kafka async write timeout for tablet " << tablet_id << ", write " << (i + 1) << "/" << promises.size() << " after " << elapsed << "ms";
-                return Status::TimedOut("Kafka async write timeout for tablet " + std::to_string(tablet_id));
-            }
-        }
-        
-        auto status = future.get();
-        if (!status.ok()) {
-            LOG(ERROR) << "Kafka async write failed for tablet " << tablet_id << ", write " << (i + 1) << "/" << promises.size() << ": " << status.to_string();
-            return status;
-        }
-        VLOG(2) << "Kafka async write " << (i + 1) << "/" << promises.size() << " completed for tablet " << tablet_id;
-    }
-    
-    LOG(INFO) << "All " << promises.size() << " async Kafka writes completed for tablet " << tablet_id;
-    return Status::OK();
-}
-
-void KafkaAsyncWriteTracker::clear_tablet_writes(int64_t tablet_id) {
-    std::lock_guard<std::mutex> lock(_mutex);
-    auto it = _pending_writes.find(tablet_id);
-    if (it != _pending_writes.end()) {
-        // Set all promises to error status
-        for (auto& promise : it->second) {
-            promise->set_value(Status::Aborted("Tablet writes cleared"));
-        }
-        _pending_writes.erase(it);
-    }
-}
-
 KafkaProducer::~KafkaProducer() {
     shutdown();
 }
@@ -338,6 +252,7 @@ Status KafkaProducer::send_sync(const std::string& topic, const std::string& key
     }
 }
 
+<<<<<<< ours
 Status KafkaProducer::send_async(const std::string& topic, const std::string& key, 
                                  const std::string& message) {
     if (!_initialized.load()) {
@@ -419,6 +334,8 @@ void KafkaProducer::poll(int timeout_ms) {
     }
 }
 
+=======
+>>>>>>> theirs
 std::string KafkaProducer::get_topic_name() const {
     return strings::Substitute("$0", config::cdc_kafka_topic);
 }
@@ -477,34 +394,12 @@ void KafkaProducerPool::shutdown() {
 void KafkaProducer::delivery_report_cb(rd_kafka_t* rk, const rd_kafka_message_t* rkmessage, void* opaque) {
     // For per-message opaque passed via RD_KAFKA_V_OPAQUE, retrieve from rkmessage->_private
     if (rkmessage && rkmessage->_private) {
-        auto* base_ctx = static_cast<BaseContext*>(rkmessage->_private);
-        if (base_ctx) {
-            switch (base_ctx->type) {
-                case SYNC_CONTEXT: {
-                    auto* sync_ctx = static_cast<SyncContext*>(base_ctx);
-                    std::lock_guard<std::mutex> lock(sync_ctx->mutex);
-                    sync_ctx->error = rkmessage->err;
-                    sync_ctx->completed = true;
-                    sync_ctx->cv.notify_one();
-                    break;
-                }
-                case ASYNC_CONTEXT: {
-                    auto* async_ctx = static_cast<AsyncContext*>(base_ctx);
-                    if (async_ctx->promise) {
-                        if (rkmessage->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
-                            async_ctx->promise->set_value(Status::OK());
-                        } else {
-                            async_ctx->promise->set_value(Status::InternalError(
-                                strings::Substitute("Kafka message delivery failed: $0", rd_kafka_err2str(rkmessage->err))));
-                        }
-                    }
-                    delete async_ctx;  // Clean up the context
-                    break;
-                }
-                default:
-                    LOG(WARNING) << "Unknown context type in Kafka delivery callback: " << base_ctx->type;
-                    break;
-            }
+        auto* sync_ctx = static_cast<SyncContext*>(rkmessage->_private);
+        if (sync_ctx) {
+            std::lock_guard<std::mutex> lock(sync_ctx->mutex);
+            sync_ctx->error = rkmessage->err;
+            sync_ctx->completed = true;
+            sync_ctx->cv.notify_one();
         }
     }
     

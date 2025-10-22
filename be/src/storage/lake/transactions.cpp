@@ -404,13 +404,6 @@ StatusOr<TabletMetadataPtr> publish_version(TabletManager* tablet_mgr, int64_t t
         }
     }
 
-    // Wait for all async Kafka writes to complete before saving new metadata to ensure strong consistency
-    if (cdc_enable && config::cdc_streaming_send && config::cdc_streaming_async_kafka) {
-        LOG(INFO) << "Waiting for async Kafka writes to complete for tablet " << tablet_id;
-        RETURN_IF_ERROR(KafkaAsyncWriteTracker::instance()->wait_tablet_writes_complete(tablet_id));
-        LOG(INFO) << "All async Kafka writes completed for tablet " << tablet_id;
-    }
-
     // Save new metadata
     RETURN_IF_ERROR(log_applier->finish());
 
