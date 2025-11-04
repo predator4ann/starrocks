@@ -424,16 +424,10 @@ Status RowsetUpdateState::_prepare_auto_increment_partial_update_states(uint32_t
 Status RowsetUpdateState::_prepare_partial_update_states(uint32_t segment_id, const RowsetUpdateStateParams& params,
                                                          bool need_lock) {
     CHECK_MEM_LIMIT("RowsetUpdateState::_prepare_partial_update_states");
-    
+
     // For COLUMN_UPSERT_MODE, we only need src_rss_rowids to identify new rows (UINT64_MAX)
-    // We don't need to read column values as new rows will be handled separately
     const auto& txn_meta = params.op_write.txn_meta();
     bool is_column_upsert_mode = (txn_meta.partial_update_mode() == PartialUpdateMode::COLUMN_UPSERT_MODE);
-    
-    std::vector<ColumnId> read_column_ids;
-    if (!is_column_upsert_mode) {
-        read_column_ids = get_read_columns_ids(params.op_write, params.tablet_schema);
-    }
 
     for (auto& entry : txn_meta.column_to_expr_value()) {
         _column_to_expr_value.insert({entry.first, entry.second});
@@ -450,7 +444,7 @@ Status RowsetUpdateState::_prepare_partial_update_states(uint32_t segment_id, co
     if (is_column_upsert_mode) {
         return Status::OK();
     }
-    
+    std::vector<ColumnId> read_column_ids = get_read_columns_ids(params.op_write, params.tablet_schema);
     // For COLUMN_UPDATE_MODE, read column values as before
     auto read_column_schema = ChunkHelper::convert_schema(params.tablet_schema, read_column_ids);
     // column list that need to read from source segment

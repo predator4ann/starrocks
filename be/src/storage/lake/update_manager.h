@@ -89,7 +89,21 @@ public:
     // publish primary key tablet, update primary index and delvec, then update meta file
     Status publish_primary_key_tablet(const TxnLogPB_OpWrite& op_write, int64_t txn_id,
                                       const TabletMetadataPtr& metadata, Tablet* tablet, IndexEntry* index_entry,
-                                      MetaFileBuilder* builder, int64_t base_version);
+                                      MetaFileBuilder* builder, int64_t base_version, bool batch_apply = false);
+
+    Status _read_chunk_for_upsert(const TxnLogPB_OpWrite& op_write, const TabletSchemaCSPtr& tschema, Tablet* tablet,
+                                  const std::shared_ptr<FileSystem>& fs, uint32_t seg,
+                                  const std::vector<uint32_t>& insert_rowids, const std::vector<uint32_t>& update_cids,
+                                  ChunkPtr* out_chunk);
+
+    Status _handle_column_upsert_mode(const TxnLogPB_OpWrite& op_write, int64_t txn_id,
+                                      const TabletMetadataPtr& metadata, Tablet* tablet, LakePrimaryIndex& index,
+                                      MetaFileBuilder* builder, int64_t base_version, uint32_t rowset_id);
+
+    Status _handle_delete_files(const TxnLogPB_OpWrite& op_write, int64_t txn_id, const TabletMetadataPtr& metadata,
+                                Tablet* tablet, LakePrimaryIndex& index, IndexEntry* index_entry,
+                                MetaFileBuilder* builder, int64_t base_version, uint32_t del_rebuild_rssid,
+                                const RowsetUpdateStateParams& params);
 
     Status publish_column_mode_partial_update(const TxnLogPB_OpWrite& op_write, int64_t txn_id,
                                               const TabletMetadataPtr& metadata, Tablet* tablet,
