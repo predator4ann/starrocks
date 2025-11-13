@@ -1680,9 +1680,8 @@ CONF_mInt32(avro_reader_buffer_size_bytes, "8388608");
 // CDC configuration
 // Global CDC enable switch (dynamic parameter)
 CONF_mBool(cdc_enable, "false");
-// Whether to stream CDC sending while collecting to reduce peak memory.
-// When enabled, we still preserve strict per-tablet ordering.
-CONF_Bool(cdc_streaming_send, "true");
+// CDC output format: "json" or "protobuf"
+CONF_mString(cdc_output_format, "json");
 // CDC Kafka configuration
 // Kafka broker list, comma separated
 CONF_String(cdc_kafka_brokers, "localhost:9092");

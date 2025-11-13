@@ -50,6 +50,8 @@ import com.starrocks.catalog.Table;
 import com.starrocks.catalog.TableProperty;
 import com.starrocks.catalog.Tablet;
 import com.starrocks.common.Config;
+import com.starrocks.common.util.concurrent.lock.LockType;
+import com.starrocks.common.util.concurrent.lock.Locker;
 import com.starrocks.common.StarRocksException;
 import com.starrocks.common.TraceManager;
 import com.starrocks.common.io.Writable;
@@ -1022,11 +1024,17 @@ public class TransactionState implements Writable, GsonPreProcessable {
                     isVersionOverwrite());
             
             // Read table's CDC configuration and set it to the task
-            for (Long tableId : getTableIdList()) {
-                Database db = GlobalStateMgr.getCurrentState().getLocalMetastore().getDb(dbId);
-                if (db != null) {
+            // Use lock to ensure safe access to database and table metadata
+            Locker locker = new Locker();
+            locker.lockTablesWithIntensiveDbLock(dbId, getTableIdList(), LockType.READ);
+            try {
+                for (Long tableId : getTableIdList()) {
+                    Database db = GlobalStateMgr.getCurrentState().getLocalMetastore().getDb(dbId);
+                    if (db == null) {
+                        continue;
+                    }
                     Table table = db.getTable(tableId);
-                    if (table instanceof OlapTable) {
+                    if (table != null && table instanceof OlapTable) {
                         OlapTable olapTable = (OlapTable) table;
                         TableProperty tableProperty = olapTable.getTableProperty();
                         if (tableProperty != null) {
@@ -1035,6 +1043,8 @@ public class TransactionState implements Writable, GsonPreProcessable {
                         }
                     }
                 }
+            } finally {
+                locker.unLockTablesWithIntensiveDbLock(dbId, getTableIdList(), LockType.READ);
             }
             
             this.addPublishVersionTask(backendId, task);

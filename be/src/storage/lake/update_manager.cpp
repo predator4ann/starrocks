@@ -1203,7 +1203,7 @@ Status UpdateManager::_collect_segment_cdc_data(const TxnLogPB_OpWrite& op_write
         
         // Collect CDC data from segment file
         RETURN_IF_ERROR(_cdc_collector->collect_update_data(
-            src, params.tablet_schema, cdc_column_ids, segment_id, txn_id, 
+            params.tablet->tablet_mgr(), src, params.tablet_schema, cdc_column_ids, segment_id, txn_id, 
             metadata->version(), cdc_collector));
     }
     
@@ -1272,10 +1272,6 @@ StatusOr<int64_t> UpdateManager::process_unified_cdc(const TxnLogPB_OpWrite& op_
     
     // Collect CDC data for non-delete operations
     RETURN_IF_ERROR(_collect_segment_cdc_data(op_write, params, txn_id, metadata, cdc_collector.get(), total_cdc_time));
-    
-    if (cdc_collector->has_data()) {
-        RETURN_IF_ERROR(_cdc_collector->commit_transaction_data(*cdc_collector));
-    }
     
     return total_cdc_time;
 }
