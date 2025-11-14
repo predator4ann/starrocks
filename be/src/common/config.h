@@ -1691,8 +1691,8 @@ CONF_String(cdc_kafka_topic, "starrocks_cdc");
 CONF_mInt64(cdc_kafka_max_message_size, "1048576"); // 1MB
 // Maximum rows per CDC message (simple limit to avoid oversized messages)
 CONF_mInt32(cdc_kafka_max_rows_per_message, "1024");
-// Kafka producer timeout in milliseconds
-CONF_Int32(cdc_kafka_timeout_ms, "30000");
+// Kafka producer send timeout in milliseconds (dynamic)
+CONF_mInt32(cdc_kafka_timeout_ms, "30000");
 // Kafka producer batch size
 CONF_Int32(cdc_kafka_batch_size, "16384");
 // Kafka producer linger time in milliseconds

@@ -174,8 +174,8 @@ void KafkaProducer::shutdown() {
     
     if (_producer) {
         // Wait for outstanding messages to be delivered
-        LOG(INFO) << "Flushing Kafka producer...";
-        rd_kafka_flush(_producer, 10000); // 10 seconds timeout
+        int flush_timeout_ms = config::cdc_kafka_timeout_ms;
+        rd_kafka_flush(_producer, flush_timeout_ms);
         
         // Destroy producer
         rd_kafka_destroy(_producer);
@@ -252,90 +252,6 @@ Status KafkaProducer::send_sync(const std::string& topic, const std::string& key
     }
 }
 
-<<<<<<< ours
-Status KafkaProducer::send_async(const std::string& topic, const std::string& key, 
-                                 const std::string& message) {
-    if (!_initialized.load()) {
-        return Status::InternalError("KafkaProducer not initialized");
-    }
-    
-    if (_shutdown.load()) {
-        return Status::InternalError("KafkaProducer is shutdown");
-    }
-    
-    rd_kafka_resp_err_t err = rd_kafka_producev(
-        _producer,
-        RD_KAFKA_V_TOPIC(topic.c_str()),
-        RD_KAFKA_V_KEY(key.c_str(), key.size()),
-        RD_KAFKA_V_VALUE(const_cast<void*>(static_cast<const void*>(message.c_str())), message.size()),
-        RD_KAFKA_V_END
-    );
-    
-    if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
-        return Status::InternalError(strings::Substitute("Failed to produce message: $0", 
-                                                         rd_kafka_err2str(err)));
-    }
-    
-    // Poll to handle delivery reports
-    rd_kafka_poll(_producer, 0);
-    
-    return Status::OK();
-}
-
-Status KafkaProducer::send_async_with_tracking(const std::string& topic, const std::string& key, 
-                                               const std::string& message, int64_t tablet_id) {
-    if (!_initialized.load()) {
-        return Status::InternalError("KafkaProducer not initialized");
-    }
-    
-    if (_shutdown.load()) {
-        return Status::InternalError("KafkaProducer is shutdown");
-    }
-    
-    // Create promise for tracking
-    auto promise = std::make_shared<std::promise<Status>>();
-    KafkaAsyncWriteTracker::instance()->track_async_write(tablet_id, promise);
-    
-    // Create async context - use raw pointer to avoid shared_ptr lifecycle issues
-    // The context will be deleted in the delivery callback
-    auto* async_ctx = new AsyncContext();
-    async_ctx->promise = promise;
-    
-    rd_kafka_resp_err_t err = rd_kafka_producev(
-        _producer,
-        RD_KAFKA_V_TOPIC(topic.c_str()),
-        RD_KAFKA_V_KEY(key.c_str(), key.size()),
-        RD_KAFKA_V_VALUE(const_cast<void*>(static_cast<const void*>(message.c_str())), message.size()),
-        RD_KAFKA_V_OPAQUE(async_ctx),
-        RD_KAFKA_V_END
-    );
-    
-    if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
-        promise->set_value(Status::InternalError(strings::Substitute("Failed to produce message: $0", 
-                                                                    rd_kafka_err2str(err))));
-        delete async_ctx;  // Clean up context if sending failed
-        return Status::InternalError(strings::Substitute("Failed to produce message: $0", 
-                                                         rd_kafka_err2str(err)));
-    }
-    
-    // Poll multiple times to actively drive message sending to network
-    // This is critical for async performance - ensures messages are actually sent
-    // rather than just queued in librdkafka's internal buffer
-    for (int i = 0; i < 3; ++i) {
-        rd_kafka_poll(_producer, 1);  // 1ms timeout per poll
-    }
-    
-    return Status::OK();
-}
-
-void KafkaProducer::poll(int timeout_ms) {
-    if (_producer && _initialized.load() && !_shutdown.load()) {
-        rd_kafka_poll(_producer, timeout_ms);
-    }
-}
-
-=======
->>>>>>> theirs
 std::string KafkaProducer::get_topic_name() const {
     return strings::Substitute("$0", config::cdc_kafka_topic);
 }
@@ -389,7 +305,6 @@ void KafkaProducerPool::shutdown() {
         if (p) p->shutdown();
     }
 }
-
 
 void KafkaProducer::delivery_report_cb(rd_kafka_t* rk, const rd_kafka_message_t* rkmessage, void* opaque) {
     // For per-message opaque passed via RD_KAFKA_V_OPAQUE, retrieve from rkmessage->_private

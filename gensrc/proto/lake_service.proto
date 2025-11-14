@@ -38,8 +38,6 @@ message PublishVersionRequest {
     optional int64 timeout_ms = 6;
     repeated TxnInfoPB txn_infos = 7;
     repeated int64 rebuild_pindex_tablet_ids = 8;
-    
-    // CDC (Change Data Capture) configuration
     optional bool cdc_enable = 9;
 }
 
