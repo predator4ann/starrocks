@@ -37,13 +37,10 @@ using TabletSchemaCSPtr = std::shared_ptr<const TabletSchema>;
 
 namespace starrocks::lake {
 
-// Forward declarations
 class CdcDataCollector;
 class CdcTransactionData;
 
-// CDC transaction data container - lightweight metadata holder for streaming mode
-// In streaming mode, data is sent immediately and not accumulated
-class CdcTransactionData {
+// CDC transaction data container
 public:
     explicit CdcTransactionData(int64_t tablet_id, int64_t txn_id, int64_t version)
         : _tablet_id(tablet_id), _txn_id(txn_id), _version(version) {}
