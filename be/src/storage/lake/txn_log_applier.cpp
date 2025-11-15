@@ -36,6 +36,7 @@
 #include "storage/storage_engine.h"
 #include "testutil/sync_point.h"
 #include "types/logical_type.h"
+#include "util/starrocks_metrics.h"
 #include "util/trace.h"
 #include "storage/lake/column_mode_partial_update_handler.h"
 
@@ -293,7 +294,13 @@ private:
         double cdc_ratio = total_cdc_time * 100.0 / total_time;
         double publish_ratio = publish_time * 100.0 / total_time;
         LOG(INFO) << strings::Substitute("TXN timing: tablet_id=$0, txn_id=$1, total=$2ms, publish=$3ms($4%), cdc=$5ms($6%)", 
-                                        _tablet.id(), txn_id, total_time, publish_time, publish_ratio, total_cdc_time, cdc_ratio);  
+                                        _tablet.id(), txn_id, total_time, publish_time, publish_ratio, total_cdc_time, cdc_ratio);
+        
+        // Record CDC and publish metrics when CDC is enabled
+        if (config::cdc_enable && _cdc_enable) {
+            StarRocksMetrics::instance()->cdc_process_total_duration_us.increment(total_cdc_time * 1000);  // Convert ms to us
+            StarRocksMetrics::instance()->cdc_total_duration_us.increment(total_time * 1000);  // Convert ms to us
+        }
         
         return Status::OK();
     }

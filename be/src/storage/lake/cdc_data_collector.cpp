@@ -15,6 +15,7 @@
 #include "storage/lake/cdc_data_collector.h"
 
 #include <ctime>
+#include <fmt/format.h>
 #include "column/column_helper.h"
 #include "common/config.h"
 #include "gutil/strings/substitute.h"
@@ -24,6 +25,8 @@
 #include "storage/primary_key_encoder.h"
 #include "storage/chunk_helper.h"
 #include "util/defer_op.h"
+#include "util/starrocks_metrics.h"
+#include "util/stopwatch.hpp"
 #include "types/logical_type.h"
 #include "gen_cpp/cdc.pb.h"
 
@@ -33,6 +36,12 @@ namespace starrocks::lake {
 Status CdcDataCollector::collect_delete_data(uint32_t del_id, const RowsetUpdateState& state,
                                             const RowsetUpdateStateParams& params, int64_t txn_id, int64_t version,
                                             CdcTransactionData* collector) {
+    MonotonicStopWatch collect_timer;
+    collect_timer.start();
+    
+    // Track delete operation count
+    StarRocksMetrics::instance()->cdc_collect_delete_total.increment(1);
+    
     LOG(INFO) << strings::Substitute("CDC: Starting to collect delete data for tablet=$0, txn_id=$1, del_id=$2", 
                                     params.tablet->id(), txn_id, del_id);
     
@@ -59,28 +68,67 @@ Status CdcDataCollector::collect_delete_data(uint32_t del_id, const RowsetUpdate
         RETURN_IF_ERROR(PrimaryKeyEncoder::decode(pkey_schema, *deletes, row_idx, 1, pk_chunk.get()));
     }
     
+    // Record data read/decode time
+    int64_t data_read_us = collect_timer.elapsed_time() / 1000;
+    StarRocksMetrics::instance()->cdc_data_read_duration_us.increment(data_read_us);
+    
     // Serialize and send delete operations with type preservation (same as Update)
+    MonotonicStopWatch serialize_timer;
+    serialize_timer.start();
     std::string serialized_data = serialize_chunk_to_cdc_data(
         *collector, pk_chunk.get(), params.tablet_schema, pk_column_ids, "d");
+    int64_t serialize_us = serialize_timer.elapsed_time() / 1000;
+    StarRocksMetrics::instance()->cdc_serialize_duration_us.increment(serialize_us);
     
     if (!serialized_data.empty()) {
+        size_t byte_size = serialized_data.size();
+        
         auto* kafka_producer = KafkaProducerPool::instance()->pick(collector->tablet_id());
         if (!kafka_producer) {
-            return Status::InternalError("Failed to get KafkaProducer instance");
+            return Status::InternalError(
+                fmt::format("CDC enabled but failed to get KafkaProducer instance for tablet_id={}, txn_id={}. "
+                           "Transaction aborted to prevent CDC data loss.",
+                           collector->tablet_id(), collector->txn_id()));
         }
         if (!kafka_producer->is_ready()) {
-            RETURN_IF_ERROR(kafka_producer->init());
+            Status init_st = kafka_producer->init();
+            if (!init_st.ok()) {
+                return Status::InternalError(
+                    fmt::format("CDC enabled but failed to initialize KafkaProducer for tablet_id={}, txn_id={}: {}. "
+                               "Transaction aborted to prevent CDC data loss.",
+                               collector->tablet_id(), collector->txn_id(), init_st.to_string()));
+            }
         }
         
         std::string topic = kafka_producer->get_topic_name();
         std::string key = std::to_string(collector->tablet_id());
+        
+        MonotonicStopWatch kafka_timer;
+        kafka_timer.start();
         Status st = kafka_producer->send_sync(topic, key, serialized_data, config::cdc_kafka_timeout_ms);
+        int64_t kafka_us = kafka_timer.elapsed_time() / 1000;
+        StarRocksMetrics::instance()->cdc_kafka_send_duration_us.increment(kafka_us);
         
         if (st.ok()) {
-            VLOG(2) << strings::Substitute("CDC delete sent: tablet=$0, txn=$1, rows=$2",
-                                          collector->tablet_id(), collector->txn_id(), num_deletes);
+            // Track successful metrics
+            StarRocksMetrics::instance()->cdc_kafka_send_success_total.increment(1);
+            StarRocksMetrics::instance()->cdc_messages_sent_total.increment(1);
+            StarRocksMetrics::instance()->cdc_rows_sent_total.increment(num_deletes);
+            StarRocksMetrics::instance()->cdc_bytes_sent_total.increment(byte_size);
+            StarRocksMetrics::instance()->cdc_delete_operations_total.increment(1);
+            
+            VLOG(2) << strings::Substitute("CDC delete sent: tablet=$0, txn=$1, rows=$2, bytes=$3, "
+                                          "data_read_us=$4, serialize_us=$5, kafka_us=$6",
+                                          collector->tablet_id(), collector->txn_id(), num_deletes,
+                                          byte_size, data_read_us, serialize_us, kafka_us);
+        } else {
+            StarRocksMetrics::instance()->cdc_kafka_send_failed_total.increment(1);
+            LOG(ERROR) << "CDC Kafka send failed for delete: " << st.to_string() 
+                       << ", tablet_id=" << collector->tablet_id() 
+                       << ", txn_id=" << collector->txn_id()
+                       << ". Transaction will be aborted to ensure CDC data consistency.";
+            RETURN_IF_ERROR(st);  // Abort transaction immediately when Kafka send fails
         }
-        RETURN_IF_ERROR(st);
     }
     
     LOG(INFO) << strings::Substitute("CDC: Collected delete data for tablet=$0, txn_id=$1, del_id=$2, total_deletes=$3", 
@@ -98,6 +146,12 @@ Status CdcDataCollector::collect_update_data(TabletManager* tablet_mgr,
     if (updated_column_ids.empty()) {
         return Status::OK();
     }
+    
+    // Track update operation count
+    StarRocksMetrics::instance()->cdc_collect_update_total.increment(1);
+    
+    MonotonicStopWatch collect_timer;
+    collect_timer.start();
     
     LOG(INFO) << strings::Substitute("CDC: Loading segment data for updated columns, segment_id=$0, updated_columns=$1", 
                                     segment_id, updated_column_ids.size());
@@ -128,6 +182,10 @@ Status CdcDataCollector::collect_update_data(TabletManager* tablet_mgr,
     auto page_chunk = ChunkHelper::new_chunk(updated_schema, page_size);
     size_t total_rows_read = 0;
     
+    // Record data read/decode time (segment loading and iterator creation)
+    int64_t data_read_us = collect_timer.elapsed_time() / 1000;
+    StarRocksMetrics::instance()->cdc_data_read_duration_us.increment(data_read_us);
+    
     int64_t page_number = 0;
     while (total_rows_read < num_rows) {
         page_chunk->reset();
@@ -138,15 +196,57 @@ Status CdcDataCollector::collect_update_data(TabletManager* tablet_mgr,
         total_rows_read += page_chunk->num_rows();
         page_number++;
 
+        size_t row_count = page_chunk->num_rows();
+        
+        MonotonicStopWatch serialize_timer;
+        serialize_timer.start();
         std::string serialized_data = serialize_chunk_to_cdc_data(
             *collector, page_chunk.get(), tablet_schema, updated_column_ids, "u");
+        int64_t serialize_us = serialize_timer.elapsed_time() / 1000;
+        StarRocksMetrics::instance()->cdc_serialize_duration_us.increment(serialize_us);
         
         if (!serialized_data.empty()) {
+            size_t byte_size = serialized_data.size();
+            
             auto* kafka_producer = KafkaProducerPool::instance()->pick(collector->tablet_id());
             if (kafka_producer && kafka_producer->is_ready()) {
                 std::string topic = kafka_producer->get_topic_name();
                 std::string key = std::to_string(collector->tablet_id());
-                (void)kafka_producer->send_sync(topic, key, serialized_data, config::cdc_kafka_timeout_ms);
+                
+                MonotonicStopWatch kafka_timer;
+                kafka_timer.start();
+                Status st = kafka_producer->send_sync(topic, key, serialized_data, config::cdc_kafka_timeout_ms);
+                int64_t kafka_us = kafka_timer.elapsed_time() / 1000;
+                StarRocksMetrics::instance()->cdc_kafka_send_duration_us.increment(kafka_us);
+                
+                if (st.ok()) {
+                    // Track successful metrics
+                    StarRocksMetrics::instance()->cdc_kafka_send_success_total.increment(1);
+                    StarRocksMetrics::instance()->cdc_messages_sent_total.increment(1);
+                    StarRocksMetrics::instance()->cdc_rows_sent_total.increment(row_count);
+                    StarRocksMetrics::instance()->cdc_bytes_sent_total.increment(byte_size);
+                    StarRocksMetrics::instance()->cdc_update_operations_total.increment(1);
+                    
+                    VLOG(2) << strings::Substitute("CDC update sent: tablet=$0, txn=$1, page=$2, rows=$3, "
+                                                   "bytes=$4, serialize_us=$5, kafka_us=$6",
+                                                   collector->tablet_id(), collector->txn_id(), page_number,
+                                                   row_count, byte_size, serialize_us, kafka_us);
+                } else {
+                    StarRocksMetrics::instance()->cdc_kafka_send_failed_total.increment(1);
+                    LOG(ERROR) << "CDC Kafka send failed for update: " << st.to_string() 
+                               << ", tablet_id=" << collector->tablet_id() 
+                               << ", txn_id=" << collector->txn_id()
+                               << ". Transaction will be aborted to ensure CDC data consistency.";
+                    itr->close();
+                    RETURN_IF_ERROR(st);
+                }
+            } else {
+                // Kafka producer not ready
+                itr->close();
+                return Status::InternalError(
+                    fmt::format("CDC enabled but Kafka producer is not ready for tablet_id={}, txn_id={}. "
+                               "Transaction aborted to prevent CDC data loss.",
+                               collector->tablet_id(), collector->txn_id()));
             }
         }
     }

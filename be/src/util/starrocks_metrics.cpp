@@ -247,6 +247,23 @@ StarRocksMetrics::StarRocksMetrics() : _metrics(_s_registry_name), _table_metric
 
     REGISTER_STARROCKS_METRIC(short_circuit_request_total);
     REGISTER_STARROCKS_METRIC(short_circuit_request_duration_us);
+
+    // CDC Metrics
+    REGISTER_STARROCKS_METRIC(cdc_data_read_duration_us);
+    REGISTER_STARROCKS_METRIC(cdc_serialize_duration_us);
+    REGISTER_STARROCKS_METRIC(cdc_kafka_send_duration_us);
+    REGISTER_STARROCKS_METRIC(cdc_process_total_duration_us);
+    REGISTER_STARROCKS_METRIC(cdc_total_duration_us);
+    REGISTER_STARROCKS_METRIC(cdc_messages_sent_total);
+    REGISTER_STARROCKS_METRIC(cdc_rows_sent_total);
+    REGISTER_STARROCKS_METRIC(cdc_bytes_sent_total);
+    REGISTER_STARROCKS_METRIC(cdc_update_operations_total);
+    REGISTER_STARROCKS_METRIC(cdc_delete_operations_total);
+    REGISTER_STARROCKS_METRIC(cdc_kafka_send_success_total);
+    REGISTER_STARROCKS_METRIC(cdc_kafka_send_failed_total);
+    REGISTER_STARROCKS_METRIC(cdc_kafka_send_retries_total);
+    REGISTER_STARROCKS_METRIC(cdc_collect_update_total);
+    REGISTER_STARROCKS_METRIC(cdc_collect_delete_total);
 }
 
 void StarRocksMetrics::initialize(const std::vector<std::string>& paths, bool init_system_metrics,

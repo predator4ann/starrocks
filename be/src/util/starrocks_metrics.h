@@ -396,6 +396,30 @@ public:
     METRIC_DEFINE_INT_COUNTER(short_circuit_request_total, MetricUnit::REQUESTS);
     METRIC_DEFINE_INT_COUNTER(short_circuit_request_duration_us, MetricUnit::MICROSECONDS);
 
+    // CDC metrics
+    // Performance metrics - track time spent in each CDC phase
+    METRIC_DEFINE_INT_COUNTER(cdc_data_read_duration_us, MetricUnit::MICROSECONDS);
+    METRIC_DEFINE_INT_COUNTER(cdc_serialize_duration_us, MetricUnit::MICROSECONDS);
+    METRIC_DEFINE_INT_COUNTER(cdc_kafka_send_duration_us, MetricUnit::MICROSECONDS);
+    METRIC_DEFINE_INT_COUNTER(cdc_process_total_duration_us, MetricUnit::MICROSECONDS);  // Total CDC process time
+    METRIC_DEFINE_INT_COUNTER(cdc_total_duration_us, MetricUnit::MICROSECONDS);  // Total time when CDC enabled
+
+    // Throughput metrics - track volume of CDC data
+    METRIC_DEFINE_INT_COUNTER(cdc_messages_sent_total, MetricUnit::OPERATIONS);
+    METRIC_DEFINE_INT_COUNTER(cdc_rows_sent_total, MetricUnit::ROWS);
+    METRIC_DEFINE_INT_COUNTER(cdc_bytes_sent_total, MetricUnit::BYTES);
+    METRIC_DEFINE_INT_COUNTER(cdc_update_operations_total, MetricUnit::OPERATIONS);
+    METRIC_DEFINE_INT_COUNTER(cdc_delete_operations_total, MetricUnit::OPERATIONS);
+
+    // Reliability metrics - track success/failure rates
+    METRIC_DEFINE_INT_COUNTER(cdc_kafka_send_success_total, MetricUnit::OPERATIONS);
+    METRIC_DEFINE_INT_COUNTER(cdc_kafka_send_failed_total, MetricUnit::OPERATIONS);
+    METRIC_DEFINE_INT_COUNTER(cdc_kafka_send_retries_total, MetricUnit::OPERATIONS);
+
+    // Additional useful metrics
+    METRIC_DEFINE_INT_COUNTER(cdc_collect_update_total, MetricUnit::OPERATIONS);
+    METRIC_DEFINE_INT_COUNTER(cdc_collect_delete_total, MetricUnit::OPERATIONS);
+
     static StarRocksMetrics* instance() {
         static StarRocksMetrics instance;
         return &instance;
