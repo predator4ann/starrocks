@@ -14,6 +14,10 @@
 
 #pragma once
 
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -22,9 +26,6 @@
 #include "storage/lake/rowset_update_state.h"
 #include "storage/lake/tablet.h"
 #include "storage/tablet_schema.h"
-#include <rapidjson/document.h>
-#include <rapidjson/writer.h>
-#include <rapidjson/stringbuffer.h>
 
 namespace starrocks {
 class Chunk;
@@ -42,19 +43,24 @@ class CdcTransactionData;
 
 // CDC transaction data container
 public:
-    explicit CdcTransactionData(int64_t tablet_id, int64_t txn_id, int64_t version)
+explicit CdcTransactionData(int64_t tablet_id, int64_t txn_id, int64_t version)
         : _tablet_id(tablet_id), _txn_id(txn_id), _version(version) {}
 
-    int64_t tablet_id() const { return _tablet_id; }
-    int64_t txn_id() const { return _txn_id; }
-    int64_t version() const { return _version; }
+int64_t tablet_id() const {
+    return _tablet_id;
+}
+int64_t txn_id() const {
+    return _txn_id;
+}
+int64_t version() const {
+    return _version;
+}
 
 private:
-    int64_t _tablet_id;
-    int64_t _txn_id;
-    int64_t _version;
+int64_t _tablet_id;
+int64_t _txn_id;
+int64_t _version;
 };
-
 
 class CdcDataCollector {
 public:
@@ -62,38 +68,28 @@ public:
     ~CdcDataCollector() = default;
 
     // Collect delete data
-    Status collect_delete_data(uint32_t del_id, const RowsetUpdateState& state,
-                              const RowsetUpdateStateParams& params, int64_t txn_id, int64_t version,
-                              CdcTransactionData* collector);
-    
-    
+    Status collect_delete_data(uint32_t del_id, const RowsetUpdateState& state, const RowsetUpdateStateParams& params,
+                               int64_t txn_id, int64_t version, CdcTransactionData* collector);
+
     // Collect updated column data by loading segment file (for rewrite scenarios)
-    Status collect_update_data(TabletManager* tablet_mgr,
-                               const FileInfo& src, 
-                               const TabletSchemaCSPtr& tablet_schema,
-                               const std::vector<uint32_t>& updated_column_ids,
-                               uint32_t segment_id, int64_t txn_id, int64_t version,
-                               CdcTransactionData* collector);
-    
+    Status collect_update_data(TabletManager* tablet_mgr, const FileInfo& src, const TabletSchemaCSPtr& tablet_schema,
+                               const std::vector<uint32_t>& updated_column_ids, uint32_t segment_id, int64_t txn_id,
+                               int64_t version, CdcTransactionData* collector);
+
 private:
     // Unified function: serialize Chunk directly to CDC data (protobuf or JSON based on config)
     // Supports both Update and Delete operations with full type preservation
     // Returns serialized string, empty on error
-    std::string serialize_chunk_to_cdc_data(const CdcTransactionData& collector,
-                                            const Chunk* chunk,
+    std::string serialize_chunk_to_cdc_data(const CdcTransactionData& collector, const Chunk* chunk,
                                             const TabletSchemaCSPtr& tablet_schema,
-                                            const std::vector<uint32_t>& column_ids,
-                                            const std::string& op_type);
-    
+                                            const std::vector<uint32_t>& column_ids, const std::string& op_type);
+
     // Convert Column value to typed JSON value (preserves native types: int, float, bool, string)
-    void column_value_to_json(const Column* column, size_t row_idx,
-                              const TabletColumn& tablet_column,
-                              rapidjson::Value* json_value,
-                              rapidjson::Document::AllocatorType& allocator);
-    
+    void column_value_to_json(const Column* column, size_t row_idx, const TabletColumn& tablet_column,
+                              rapidjson::Value* json_value, rapidjson::Document::AllocatorType& allocator);
+
     // Convert column value to protobuf message (with full type preservation)
-    void column_value_to_protobuf(const Column* column, size_t row_idx, 
-                                  const TabletColumn& tablet_column,
+    void column_value_to_protobuf(const Column* column, size_t row_idx, const TabletColumn& tablet_column,
                                   starrocks::CdcColumnValuePB* pb_value);
 };
 

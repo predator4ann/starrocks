@@ -401,8 +401,8 @@ public:
     METRIC_DEFINE_INT_COUNTER(cdc_data_read_duration_us, MetricUnit::MICROSECONDS);
     METRIC_DEFINE_INT_COUNTER(cdc_serialize_duration_us, MetricUnit::MICROSECONDS);
     METRIC_DEFINE_INT_COUNTER(cdc_kafka_send_duration_us, MetricUnit::MICROSECONDS);
-    METRIC_DEFINE_INT_COUNTER(cdc_process_total_duration_us, MetricUnit::MICROSECONDS);  // Total CDC process time
-    METRIC_DEFINE_INT_COUNTER(cdc_total_duration_us, MetricUnit::MICROSECONDS);  // Total time when CDC enabled
+    METRIC_DEFINE_INT_COUNTER(cdc_process_total_duration_us, MetricUnit::MICROSECONDS); // Total CDC process time
+    METRIC_DEFINE_INT_COUNTER(cdc_total_duration_us, MetricUnit::MICROSECONDS);         // Total time when CDC enabled
 
     // Throughput metrics - track volume of CDC data
     METRIC_DEFINE_INT_COUNTER(cdc_messages_sent_total, MetricUnit::OPERATIONS);

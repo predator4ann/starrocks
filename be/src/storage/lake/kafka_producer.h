@@ -14,12 +14,13 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <mutex>
+#include <librdkafka/rdkafka.h>
+
 #include <atomic>
 #include <condition_variable>
-#include <librdkafka/rdkafka.h>
+#include <memory>
+#include <mutex>
+#include <string>
 
 #include "common/status.h"
 
@@ -30,57 +31,54 @@ class KafkaProducerPool;
 // Kafka producer for CDC data publishing (used within KafkaProducerPool)
 class KafkaProducer {
 public:
-    
     // Initialize the producer with configuration
     Status init();
 
     // Shutdown the producer
     void shutdown();
-    
+
     // Send message synchronously to Kafka
     // Returns Status::OK() if message is successfully delivered
-    Status send_sync(const std::string& topic, const std::string& key, 
-                     const std::string& message, int timeout_ms = -1);
-    
+    Status send_sync(const std::string& topic, const std::string& key, const std::string& message, int timeout_ms = -1);
+
     // Check if producer is initialized and ready
     bool is_ready() const { return _initialized.load(); }
-    
+
     // Get topic name
     std::string get_topic_name() const;
-    
+
     // Destructor
     ~KafkaProducer();
 
 private:
     friend class KafkaProducerPool;
     KafkaProducer() = default;
-    
+
     // Initialize Kafka configuration
     Status init_config();
-    
+
     // Create Kafka producer
     Status create_producer();
-    
+
     // Delivery report callback
     static void delivery_report_cb(rd_kafka_t* rk, const rd_kafka_message_t* rkmessage, void* opaque);
-    
+
     // Error callback
     static void error_cb(rd_kafka_t* rk, int err, const char* reason, void* opaque);
-    
+
     // Log callback
     static void log_cb(const rd_kafka_t* rk, int level, const char* fac, const char* buf);
 
 private:
-    
     std::atomic<bool> _initialized{false};
     std::atomic<bool> _shutdown{false};
-    
+
     rd_kafka_t* _producer{nullptr};
     rd_kafka_conf_t* _conf{nullptr};
     bool _transactions_inited{false};
-    
+
     mutable std::mutex _mutex;
-    
+
     // Synchronous send support
     struct SyncContext {
         std::mutex mutex;

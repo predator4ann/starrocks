@@ -208,8 +208,7 @@ public:
     bool TEST_primary_index_refcnt(int64_t tablet_id, uint32_t expected_cnt);
 
     StatusOr<int64_t> process_unified_cdc(const TxnLogPB_OpWrite& op_write, int64_t txn_id,
-                                          const TabletMetadataPtr& metadata, Tablet* tablet,
-                                          bool cdc_enable);
+                                          const TabletMetadataPtr& metadata, Tablet* tablet, bool cdc_enable);
 
 private:
     // print memory tracker state
@@ -228,13 +227,13 @@ private:
 
     std::shared_mutex& _get_pk_index_shard_lock(int64_t tabletId) { return _get_pk_index_shard(tabletId).lock; }
 
-    Status _collect_segment_cdc_data(const TxnLogPB_OpWrite& op_write, const RowsetUpdateStateParams& params, 
-                                    int64_t txn_id, const TabletMetadataPtr& metadata, 
-                                    CdcTransactionData* cdc_collector, int64_t& total_cdc_time);
-    
+    Status _collect_segment_cdc_data(const TxnLogPB_OpWrite& op_write, const RowsetUpdateStateParams& params,
+                                     int64_t txn_id, const TabletMetadataPtr& metadata,
+                                     CdcTransactionData* cdc_collector, int64_t& total_cdc_time);
+
     Status _collect_delete_cdc_data(const TxnLogPB_OpWrite& op_write, const RowsetUpdateStateParams& params,
-                                   int64_t txn_id, const TabletMetadataPtr& metadata, 
-                                   CdcTransactionData* cdc_collector, int64_t& total_cdc_time);
+                                    int64_t txn_id, const TabletMetadataPtr& metadata,
+                                    CdcTransactionData* cdc_collector, int64_t& total_cdc_time);
 
     struct PkIndexShard {
         mutable std::shared_mutex lock;
@@ -271,7 +270,7 @@ private:
     std::vector<PkIndexShard> _pk_index_shards;
 
     std::unique_ptr<PersistentIndexBlockCache> _block_cache;
-    
+
     std::unique_ptr<CdcDataCollector> _cdc_collector;
 };
 

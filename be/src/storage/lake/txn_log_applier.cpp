@@ -22,6 +22,7 @@
 #include "gutil/strings/join.h"
 #include "serde/column_array_serde.h"
 #include "storage/chunk_helper.h"
+#include "storage/lake/column_mode_partial_update_handler.h"
 #include "storage/lake/lake_primary_index.h"
 #include "storage/lake/lake_primary_key_recover.h"
 #include "storage/lake/meta_file.h"
@@ -38,7 +39,6 @@
 #include "types/logical_type.h"
 #include "util/starrocks_metrics.h"
 #include "util/trace.h"
-#include "storage/lake/column_mode_partial_update_handler.h"
 
 namespace starrocks::lake {
 
@@ -262,7 +262,7 @@ private:
 
     Status apply_write_log(const TxnLogPB_OpWrite& op_write, int64_t txn_id) {
         int64_t start_time = MonotonicMillis();
-        
+
         // get lock to avoid gc
         _tablet.update_mgr()->lock_shard_pk_index_shard(_tablet.id());
         DeferOp defer([&]() { _tablet.update_mgr()->unlock_shard_pk_index_shard(_tablet.id()); });
@@ -272,36 +272,38 @@ private:
             return Status::OK();
         }
         RETURN_IF_ERROR(prepare_primary_index());
-        
+
         int64_t publish_start = MonotonicMillis();
         if (is_column_mode_partial_update(op_write)) {
-            RETURN_IF_ERROR(_tablet.update_mgr()->publish_column_mode_partial_update(op_write, txn_id, _metadata, &_tablet,
-                                                                                     _index_entry, &_builder, _base_version));
+            RETURN_IF_ERROR(_tablet.update_mgr()->publish_column_mode_partial_update(
+                    op_write, txn_id, _metadata, &_tablet, _index_entry, &_builder, _base_version));
         } else {
-            RETURN_IF_ERROR(_tablet.update_mgr()->publish_primary_key_tablet(op_write, txn_id, _metadata, &_tablet, _index_entry,
-                                                                             &_builder, _base_version));
+            RETURN_IF_ERROR(_tablet.update_mgr()->publish_primary_key_tablet(op_write, txn_id, _metadata, &_tablet,
+                                                                             _index_entry, &_builder, _base_version));
         }
         int64_t publish_time = MonotonicMillis() - publish_start;
 
         // Execute CDC processing
         int64_t total_cdc_time = 0;
         if (config::cdc_enable && _cdc_enable) {
-            ASSIGN_OR_RETURN(total_cdc_time, _tablet.update_mgr()->process_unified_cdc(op_write, txn_id, _metadata, &_tablet,
-                                                                                     _cdc_enable));                                                                       
+            ASSIGN_OR_RETURN(total_cdc_time, _tablet.update_mgr()->process_unified_cdc(op_write, txn_id, _metadata,
+                                                                                       &_tablet, _cdc_enable));
         }
-        
+
         int64_t total_time = MonotonicMillis() - start_time;
         double cdc_ratio = total_cdc_time * 100.0 / total_time;
         double publish_ratio = publish_time * 100.0 / total_time;
-        LOG(INFO) << strings::Substitute("TXN timing: tablet_id=$0, txn_id=$1, total=$2ms, publish=$3ms($4%), cdc=$5ms($6%)", 
-                                        _tablet.id(), txn_id, total_time, publish_time, publish_ratio, total_cdc_time, cdc_ratio);
-        
+        LOG(INFO) << strings::Substitute(
+                "TXN timing: tablet_id=$0, txn_id=$1, total=$2ms, publish=$3ms($4%), cdc=$5ms($6%)", _tablet.id(),
+                txn_id, total_time, publish_time, publish_ratio, total_cdc_time, cdc_ratio);
+
         // Record CDC and publish metrics when CDC is enabled
         if (config::cdc_enable && _cdc_enable) {
-            StarRocksMetrics::instance()->cdc_process_total_duration_us.increment(total_cdc_time * 1000);  // Convert ms to us
-            StarRocksMetrics::instance()->cdc_total_duration_us.increment(total_time * 1000);  // Convert ms to us
+            StarRocksMetrics::instance()->cdc_process_total_duration_us.increment(total_cdc_time *
+                                                                                  1000);      // Convert ms to us
+            StarRocksMetrics::instance()->cdc_total_duration_us.increment(total_time * 1000); // Convert ms to us
         }
-        
+
         return Status::OK();
     }
 
@@ -693,10 +695,10 @@ private:
 };
 
 std::unique_ptr<TxnLogApplier> new_txn_log_applier(const Tablet& tablet, MutableTabletMetadataPtr metadata,
-                                                   int64_t new_version, bool rebuild_pindex,
-                                                   bool cdc_enable) {
+                                                   int64_t new_version, bool rebuild_pindex, bool cdc_enable) {
     if (metadata->schema().keys_type() == PRIMARY_KEYS) {
-        return std::make_unique<PrimaryKeyTxnLogApplier>(tablet, std::move(metadata), new_version, rebuild_pindex, cdc_enable);
+        return std::make_unique<PrimaryKeyTxnLogApplier>(tablet, std::move(metadata), new_version, rebuild_pindex,
+                                                         cdc_enable);
     }
     return std::make_unique<NonPrimaryKeyTxnLogApplier>(tablet, std::move(metadata), new_version);
 }
