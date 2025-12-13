@@ -276,7 +276,7 @@ private:
         int64_t publish_start = MonotonicMillis();
         if (is_column_mode_partial_update(op_write)) {
             RETURN_IF_ERROR(_tablet.update_mgr()->publish_column_mode_partial_update(
-                    op_write, txn_id, _metadata, &_tablet, _index_entry, &_builder, _base_version));
+                    op_write, txn_id, _metadata, &_tablet, &_builder, _base_version));
         } else {
             RETURN_IF_ERROR(_tablet.update_mgr()->publish_primary_key_tablet(op_write, txn_id, _metadata, &_tablet,
                                                                              _index_entry, &_builder, _base_version));
