@@ -18,21 +18,132 @@
 
 #include <ctime>
 
+#include "column/binary_column.h"
 #include "column/column_helper.h"
+#include "column/const_column.h"
+#include "column/fixed_length_column.h"
+#include "column/nullable_column.h"
+#include "common/compiler_util.h"
 #include "common/config.h"
 #include "gen_cpp/cdc.pb.h"
 #include "gutil/strings/substitute.h"
+#include "runtime/decimalv2_value.h"
+#include "runtime/decimalv3.h"
 #include "storage/chunk_helper.h"
 #include "storage/lake/kafka_producer.h"
 #include "storage/lake/tablet.h"
 #include "storage/lake/tablet_metadata.h"
 #include "storage/primary_key_encoder.h"
+#include "types/date_value.h"
+#include "types/large_int_value.h"
 #include "types/logical_type.h"
+#include "types/timestamp_value.h"
 #include "util/defer_op.h"
 #include "util/starrocks_metrics.h"
 #include "util/stopwatch.hpp"
 
 namespace starrocks::lake {
+
+// Helper function to get raw string representation of column value without debug formatting
+std::string CdcDataCollector::column_value_to_raw_string(const Column* column, size_t row_idx,
+                                                         const TabletColumn& tablet_column) {
+    if (column == nullptr || row_idx >= column->size()) {
+        return "";
+    }
+
+    auto datum = column->get(row_idx);
+    if (datum.is_null()) {
+        return "";
+    }
+
+    LogicalType type = tablet_column.type();
+
+    switch (type) {
+    case TYPE_VARCHAR:
+    case TYPE_CHAR: {
+        // For string types, get the slice directly without quotes
+        const auto& slice = datum.get_slice();
+        return std::string(slice.data, slice.size);
+    }
+    case TYPE_DATE: {
+        // Date type: use to_string()
+        return datum.get_date().to_string();
+    }
+    case TYPE_DATE_V1: {
+        // Date V1 type
+        return datum.get_date().to_string();
+    }
+    case TYPE_DATETIME:
+    case TYPE_DATETIME_V1: {
+        // Datetime type: use to_string()
+        return datum.get_timestamp().to_string();
+    }
+    case TYPE_TIME: {
+        // Time is stored as double, need special handling
+        double time_val = datum.get_double();
+        int hour = static_cast<int>(time_val / 3600);
+        int minute = static_cast<int>((time_val - hour * 3600) / 60);
+        double second = time_val - hour * 3600 - minute * 60;
+        return fmt::format("{:02d}:{:02d}:{:02.0f}", hour, minute, second);
+    }
+    case TYPE_LARGEINT: {
+        // int128 to string
+        return LargeIntValue::to_string(datum.get_int128());
+    }
+    case TYPE_DECIMAL:
+    case TYPE_DECIMALV2: {
+        // DecimalV2 to string
+        return datum.get_decimal().to_string();
+    }
+    case TYPE_DECIMAL32: {
+        // Decimal32 to string
+        return DecimalV3Cast::to_string<int32_t>(datum.get_int32(), tablet_column.precision(), tablet_column.scale());
+    }
+    case TYPE_DECIMAL64: {
+        // Decimal64 to string
+        return DecimalV3Cast::to_string<int64_t>(datum.get_int64(), tablet_column.precision(), tablet_column.scale());
+    }
+    case TYPE_DECIMAL128: {
+        // Decimal128 to string
+        return DecimalV3Cast::to_string<int128_t>(datum.get_int128(), tablet_column.precision(), tablet_column.scale());
+    }
+    case TYPE_JSON: {
+        // JSON: try to get string representation
+        const auto* json_val = datum.get_json();
+        if (json_val != nullptr) {
+            auto json_str = json_val->to_string();
+            if (json_str.ok()) {
+                return *json_str;
+            }
+        }
+        return "{}";
+    }
+    case TYPE_STRUCT:
+    case TYPE_ARRAY:
+    case TYPE_MAP: {
+        // For complex types, fall back to debug_item as they need recursive formatting
+        // But ideally should implement proper serialization
+        return column->debug_item(row_idx);
+    }
+    case TYPE_VARBINARY:
+    case TYPE_BINARY: {
+        // Binary data: get slice
+        const auto& slice = datum.get_slice();
+        return std::string(slice.data, slice.size);
+    }
+    case TYPE_HLL:
+    case TYPE_OBJECT:
+    case TYPE_PERCENTILE: {
+        // Object types: use their to_string() if available
+        // Fall back to debug_item
+        return column->debug_item(row_idx);
+    }
+    default:
+        // For other types that are already handled as numbers, shouldn't reach here
+        // Fall back to debug_item
+        return column->debug_item(row_idx);
+    }
+}
 
 Status CdcDataCollector::collect_delete_data(uint32_t del_id, const RowsetUpdateState& state,
                                              const RowsetUpdateStateParams& params, int64_t txn_id, int64_t version,
@@ -336,123 +447,217 @@ std::string CdcDataCollector::serialize_chunk_to_cdc_data(const CdcTransactionDa
     }
 }
 
+template <typename Handler>
+void CdcDataCollector::convert_column_value_impl(const Column* column, size_t row_idx,
+                                                 const TabletColumn& tablet_column, Handler&& handler,
+                                                 const char* func_name) {
+    LogicalType type = tablet_column.type();
+
+    try {
+        // Unwrap wrapper columns (NullableColumn, ConstColumn) to get actual data column
+        const Column* data_column = column;
+
+        // Handle ConstColumn
+        if (column->is_constant()) {
+            auto* const_col = down_cast<const ConstColumn*>(column);
+            data_column = const_col->data_column().get();
+            if (UNLIKELY(data_column == nullptr)) {
+                LOG(ERROR) << "CDC: ConstColumn has null data_column, column_name=" << tablet_column.name()
+                           << ", type=" << type << ", row_idx=" << row_idx;
+                handler.handle_null();
+                return;
+            }
+        }
+
+        // Handle NullableColumn
+        if (data_column->is_nullable()) {
+            auto* nullable_col = down_cast<const NullableColumn*>(data_column);
+            data_column = nullable_col->data_column().get();
+            if (UNLIKELY(data_column == nullptr)) {
+                LOG(ERROR) << "CDC: NullableColumn has null data_column, column_name=" << tablet_column.name()
+                           << ", type=" << type << ", row_idx=" << row_idx;
+                handler.handle_null();
+                return;
+            }
+        }
+
+// Helper macro for simple numeric types - direct array access without extra checks
+#define HANDLE_NUMERIC_TYPE(TYPE_ENUM, CPP_TYPE, HANDLER_METHOD)                     \
+    case TYPE_ENUM: {                                                                \
+        auto* data_col = down_cast<const FixedLengthColumn<CPP_TYPE>*>(data_column); \
+        handler.HANDLER_METHOD(data_col->get_data()[row_idx]);                       \
+        return;                                                                      \
+    }
+
+        // Branch prediction: most common types (INT, BIGINT, VARCHAR, DATE, DATETIME) are handled first
+        switch (type) {
+            HANDLE_NUMERIC_TYPE(TYPE_INT, int32_t, handle_int32)
+            HANDLE_NUMERIC_TYPE(TYPE_BIGINT, int64_t, handle_int64)
+
+        case TYPE_VARCHAR:
+        case TYPE_CHAR: {
+            auto* binary_col = down_cast<const BinaryColumn*>(data_column);
+            Slice slice = binary_col->get_slice(row_idx);
+            handler.handle_string(std::string(slice.data, slice.size));
+            return;
+        }
+        case TYPE_DATE:
+        case TYPE_DATE_V1: {
+            auto* data_col = down_cast<const FixedLengthColumn<DateValue>*>(data_column);
+            const DateValue& date_val = data_col->get_data()[row_idx];
+            handler.handle_string(date_val.to_string());
+            return;
+        }
+        case TYPE_DATETIME:
+        case TYPE_DATETIME_V1: {
+            auto* data_col = down_cast<const FixedLengthColumn<TimestampValue>*>(data_column);
+            const TimestampValue& ts_val = data_col->get_data()[row_idx];
+            handler.handle_string(ts_val.to_string());
+            return;
+        }
+
+        case TYPE_BOOLEAN: {
+            auto* data_col = down_cast<const FixedLengthColumn<uint8_t>*>(data_column);
+            handler.handle_bool(data_col->get_data()[row_idx] != 0);
+            return;
+        }
+
+            HANDLE_NUMERIC_TYPE(TYPE_TINYINT, int8_t, handle_int8)
+            HANDLE_NUMERIC_TYPE(TYPE_UNSIGNED_TINYINT, uint8_t, handle_uint8)
+            HANDLE_NUMERIC_TYPE(TYPE_SMALLINT, int16_t, handle_int16)
+            HANDLE_NUMERIC_TYPE(TYPE_UNSIGNED_SMALLINT, uint16_t, handle_uint16)
+            HANDLE_NUMERIC_TYPE(TYPE_UNSIGNED_INT, uint32_t, handle_uint32)
+            HANDLE_NUMERIC_TYPE(TYPE_UNSIGNED_BIGINT, uint64_t, handle_uint64)
+            HANDLE_NUMERIC_TYPE(TYPE_FLOAT, float, handle_float)
+            HANDLE_NUMERIC_TYPE(TYPE_DOUBLE, double, handle_double)
+            HANDLE_NUMERIC_TYPE(TYPE_DISCRETE_DOUBLE, double, handle_double)
+
+#undef HANDLE_NUMERIC_TYPE
+        case TYPE_LARGEINT:
+        case TYPE_TIME:
+        case TYPE_DECIMAL:
+        case TYPE_DECIMALV2:
+        case TYPE_DECIMAL32:
+        case TYPE_DECIMAL64:
+        case TYPE_DECIMAL128:
+        case TYPE_JSON:
+        case TYPE_STRUCT:
+        case TYPE_ARRAY:
+        case TYPE_MAP:
+            handler.handle_string(column_value_to_raw_string(column, row_idx, tablet_column));
+            return;
+        case TYPE_BINARY:
+        case TYPE_VARBINARY: {
+            auto* binary_col = down_cast<const BinaryColumn*>(data_column);
+            Slice slice = binary_col->get_slice(row_idx);
+            handler.handle_bytes(std::string(slice.data, slice.size));
+            return;
+        }
+        case TYPE_HLL:
+        case TYPE_OBJECT:
+        case TYPE_PERCENTILE:
+            handler.handle_bytes(column_value_to_raw_string(column, row_idx, tablet_column));
+            return;
+        case TYPE_NULL:
+        case TYPE_NONE:
+            handler.handle_null();
+            return;
+        case TYPE_UNKNOWN:
+        case TYPE_FUNCTION:
+        default:
+            if (UNLIKELY(true)) {
+                LOG(WARNING) << "CDC: Unsupported column type in " << func_name << ", type=" << type
+                             << ", column_name=" << tablet_column.name() << ", using raw string as fallback";
+            }
+            handler.handle_string(column_value_to_raw_string(column, row_idx, tablet_column));
+            return;
+        }
+    } catch (const std::bad_cast& e) {
+        // Catches down_cast failures - indicates schema mismatch between TabletColumn and actual Column
+        LOG(ERROR) << "CDC: Type mismatch caught in " << func_name << ", type=" << type
+                   << ", column_name=" << tablet_column.name() << ", row_idx=" << row_idx << ", error=" << e.what()
+                   << ", is_nullable=" << column->is_nullable()
+                   << ". This indicates a schema inconsistency issue. Using fallback.";
+        handler.handle_string(column_value_to_raw_string(column, row_idx, tablet_column));
+    } catch (const std::exception& e) {
+        // Catches other unexpected exceptions
+        LOG(ERROR) << "CDC: Unexpected exception caught in " << func_name << ", type=" << type
+                   << ", column_name=" << tablet_column.name() << ", row_idx=" << row_idx << ", error=" << e.what()
+                   << ", is_nullable=" << column->is_nullable() << ". Using fallback.";
+        handler.handle_string(column_value_to_raw_string(column, row_idx, tablet_column));
+    }
+}
+
+struct JsonValueHandler {
+    rapidjson::Value* json_value;
+    rapidjson::Document::AllocatorType& allocator;
+
+    void handle_null() const { json_value->SetNull(); }
+    void handle_bool(bool val) const { json_value->SetBool(val); }
+    void handle_int8(int8_t val) const { json_value->SetInt(val); }
+    void handle_uint8(uint8_t val) const { json_value->SetUint(val); }
+    void handle_int16(int16_t val) const { json_value->SetInt(val); }
+    void handle_uint16(uint16_t val) const { json_value->SetUint(val); }
+    void handle_int32(int32_t val) const { json_value->SetInt(val); }
+    void handle_uint32(uint32_t val) const { json_value->SetUint(val); }
+    void handle_int64(int64_t val) const { json_value->SetInt64(val); }
+    void handle_uint64(uint64_t val) const { json_value->SetUint64(val); }
+    void handle_float(float val) const { json_value->SetFloat(val); }
+    void handle_double(double val) const { json_value->SetDouble(val); }
+    void handle_string(const std::string& val) const { json_value->SetString(val.c_str(), allocator); }
+    void handle_bytes(const std::string& val) const { json_value->SetString(val.c_str(), allocator); }
+};
+
+struct ProtobufValueHandler {
+    starrocks::CdcColumnValuePB* pb_value;
+
+    void handle_null() const { pb_value->set_is_null(true); }
+    void handle_bool(bool val) const { pb_value->set_bool_value(val); }
+    void handle_int8(int8_t val) const { pb_value->set_int32_value(val); }
+    void handle_uint8(uint8_t val) const { pb_value->set_int32_value(val); }
+    void handle_int16(int16_t val) const { pb_value->set_int32_value(val); }
+    void handle_uint16(uint16_t val) const { pb_value->set_int32_value(val); }
+    void handle_int32(int32_t val) const { pb_value->set_int32_value(val); }
+    void handle_uint32(uint32_t val) const { pb_value->set_int64_value(val); }
+    void handle_int64(int64_t val) const { pb_value->set_int64_value(val); }
+    void handle_uint64(uint64_t val) const { pb_value->set_string_value(std::to_string(val)); }
+    void handle_float(float val) const { pb_value->set_float_value(val); }
+    void handle_double(double val) const { pb_value->set_double_value(val); }
+    void handle_string(const std::string& val) const { pb_value->set_string_value(val); }
+    void handle_bytes(const std::string& val) const { pb_value->set_bytes_value(val); }
+};
+
 void CdcDataCollector::column_value_to_json(const Column* column, size_t row_idx, const TabletColumn& tablet_column,
                                             rapidjson::Value* json_value,
                                             rapidjson::Document::AllocatorType& allocator) {
-    if (column == nullptr || row_idx >= column->size() || json_value == nullptr) {
+    if (UNLIKELY(column == nullptr || row_idx >= column->size() || json_value == nullptr)) {
         json_value->SetNull();
         return;
     }
 
-    auto datum = column->get(row_idx);
-    if (datum.is_null()) {
+    if (column->is_null(row_idx)) {
         json_value->SetNull();
         return;
     }
 
-    // Convert based on logical type to use native JSON types
-    LogicalType type = tablet_column.type();
-
-    switch (type) {
-    case TYPE_BOOLEAN:
-        json_value->SetBool(datum.get_int8() != 0);
-        break;
-    case TYPE_TINYINT:
-    case TYPE_SMALLINT:
-    case TYPE_INT:
-        json_value->SetInt(datum.get_int32());
-        break;
-    case TYPE_BIGINT:
-        json_value->SetInt64(datum.get_int64());
-        break;
-    case TYPE_FLOAT:
-        json_value->SetFloat(datum.get_float());
-        break;
-    case TYPE_DOUBLE:
-        json_value->SetDouble(datum.get_double());
-        break;
-    case TYPE_VARCHAR:
-    case TYPE_CHAR:
-    case TYPE_DATE:
-    case TYPE_DATETIME:
-    case TYPE_TIME:
-    case TYPE_DECIMAL:
-    case TYPE_DECIMALV2:
-    case TYPE_DECIMAL32:
-    case TYPE_DECIMAL64:
-    case TYPE_DECIMAL128:
-    case TYPE_JSON:
-    case TYPE_VARBINARY:
-    case TYPE_HLL:
-    case TYPE_OBJECT:
-    case TYPE_PERCENTILE:
-    default:
-        // For complex types, use string representation
-        json_value->SetString(column->debug_item(row_idx).c_str(), allocator);
-        break;
-    }
+    JsonValueHandler handler{json_value, allocator};
+    convert_column_value_impl(column, row_idx, tablet_column, handler, "JSON serialization");
 }
 
 void CdcDataCollector::column_value_to_protobuf(const Column* column, size_t row_idx, const TabletColumn& tablet_column,
                                                 starrocks::CdcColumnValuePB* pb_value) {
-    if (column == nullptr || row_idx >= column->size() || pb_value == nullptr) {
+    if (UNLIKELY(column == nullptr || row_idx >= column->size() || pb_value == nullptr)) {
         pb_value->set_is_null(true);
         return;
     }
 
-    auto datum = column->get(row_idx);
-    if (datum.is_null()) {
+    if (column->is_null(row_idx)) {
         pb_value->set_is_null(true);
         return;
     }
 
-    // Convert based on logical type to preserve type information
-    LogicalType type = tablet_column.type();
-
-    switch (type) {
-    case TYPE_BOOLEAN:
-        pb_value->set_bool_value(datum.get_int8() != 0);
-        break;
-    case TYPE_TINYINT:
-    case TYPE_SMALLINT:
-    case TYPE_INT:
-        pb_value->set_int32_value(datum.get_int32());
-        break;
-    case TYPE_BIGINT:
-        pb_value->set_int64_value(datum.get_int64());
-        break;
-    case TYPE_FLOAT:
-        pb_value->set_float_value(datum.get_float());
-        break;
-    case TYPE_DOUBLE:
-        pb_value->set_double_value(datum.get_double());
-        break;
-    case TYPE_VARCHAR:
-    case TYPE_CHAR:
-    case TYPE_DATE:
-    case TYPE_DATETIME:
-    case TYPE_TIME:
-    case TYPE_DECIMAL:
-    case TYPE_DECIMALV2:
-    case TYPE_DECIMAL32:
-    case TYPE_DECIMAL64:
-    case TYPE_DECIMAL128:
-    case TYPE_JSON:
-        // For complex types, still use string representation
-        pb_value->set_string_value(column->debug_item(row_idx));
-        break;
-    case TYPE_VARBINARY:
-    case TYPE_HLL:
-    case TYPE_OBJECT:
-    case TYPE_PERCENTILE:
-        // Binary types
-        pb_value->set_bytes_value(column->debug_item(row_idx));
-        break;
-    default:
-        // Fallback to string for unknown types
-        pb_value->set_string_value(column->debug_item(row_idx));
-        break;
-    }
+    ProtobufValueHandler handler{pb_value};
+    convert_column_value_impl(column, row_idx, tablet_column, handler, "Protobuf serialization");
 }
 
 } // namespace starrocks::lake

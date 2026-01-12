@@ -34,7 +34,7 @@ class CdcColumnValuePB;
 struct FileInfo;
 using TabletSchemaCSPtr = std::shared_ptr<const TabletSchema>;
 
-}
+} // namespace starrocks
 
 namespace starrocks::lake {
 
@@ -43,23 +43,17 @@ class CdcDataCollector;
 // CDC transaction data container
 class CdcTransactionData {
 public:
-explicit CdcTransactionData(int64_t tablet_id, int64_t txn_id, int64_t version)
-        : _tablet_id(tablet_id), _txn_id(txn_id), _version(version) {}
+    explicit CdcTransactionData(int64_t tablet_id, int64_t txn_id, int64_t version)
+            : _tablet_id(tablet_id), _txn_id(txn_id), _version(version) {}
 
-int64_t tablet_id() const {
-    return _tablet_id;
-}
-int64_t txn_id() const {
-    return _txn_id;
-}
-int64_t version() const {
-    return _version;
-}
+    int64_t tablet_id() const { return _tablet_id; }
+    int64_t txn_id() const { return _txn_id; }
+    int64_t version() const { return _version; }
 
 private:
-int64_t _tablet_id;
-int64_t _txn_id;
-int64_t _version;
+    int64_t _tablet_id;
+    int64_t _txn_id;
+    int64_t _version;
 };
 
 class CdcDataCollector {
@@ -83,6 +77,15 @@ private:
     std::string serialize_chunk_to_cdc_data(const CdcTransactionData& collector, const Chunk* chunk,
                                             const TabletSchemaCSPtr& tablet_schema,
                                             const std::vector<uint32_t>& column_ids, const std::string& op_type);
+
+    // Helper function to get raw string representation of column value (without debug formatting)
+    static std::string column_value_to_raw_string(const Column* column, size_t row_idx,
+                                                  const TabletColumn& tablet_column);
+
+    // Helper template to convert column value with unified logic
+    template <typename Handler>
+    void convert_column_value_impl(const Column* column, size_t row_idx, const TabletColumn& tablet_column,
+                                   Handler&& handler, const char* func_name);
 
     // Convert Column value to typed JSON value (preserves native types: int, float, bool, string)
     void column_value_to_json(const Column* column, size_t row_idx, const TabletColumn& tablet_column,

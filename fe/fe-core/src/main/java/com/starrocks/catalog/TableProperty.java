@@ -314,6 +314,7 @@ public class TableProperty implements Writable, GsonPostProcessable {
 
     private Multimap<String, String> location;
 
+    @SerializedName(value = "cdcEnable")
     private boolean cdcEnable = false;
 
     public TableProperty() {
@@ -824,6 +825,9 @@ public class TableProperty implements Writable, GsonPostProcessable {
     public TableProperty buildCdcConfig() {
         try {
             cdcEnable = PropertyAnalyzer.analyzeCdcEnable(properties);
+            if (cdcEnable) {
+                properties.put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, "true");
+            }
         } catch (AnalysisException e) {
             LOG.warn("Failed to build CDC config", e);
         }
@@ -833,6 +837,9 @@ public class TableProperty implements Writable, GsonPostProcessable {
     public TableProperty buildCdcConfig(KeysType keysType) {
         try {
             cdcEnable = PropertyAnalyzer.analyzeCdcEnable(properties, keysType);
+            if (cdcEnable) {
+                properties.put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, "true");
+            }
         } catch (AnalysisException e) {
             LOG.warn("Failed to build CDC config", e);
         }
@@ -1121,6 +1128,11 @@ public class TableProperty implements Writable, GsonPostProcessable {
 
     public void setCdcEnable(boolean cdcEnable) {
         this.cdcEnable = cdcEnable;
+        if (cdcEnable) {
+            properties.put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, "true");
+        } else {
+            properties.remove(PropertyAnalyzer.PROPERTIES_CDC_ENABLE);
+        }
     }
 
     public static TableProperty read(DataInput in) throws IOException {
