@@ -1688,7 +1688,7 @@ CONF_String(cdc_kafka_brokers, "localhost:9092");
 // Kafka topic for CDC data
 CONF_String(cdc_kafka_topic, "starrocks_cdc");
 // Maximum message size for Kafka (bytes), should be less than Kafka's message.max.bytes
-CONF_mInt64(cdc_kafka_max_message_size, "1048576"); // 1MB
+CONF_mInt64(cdc_kafka_max_message_size, "104857600"); // 100MB
 // Maximum rows per CDC message (simple limit to avoid oversized messages)
 CONF_mInt32(cdc_kafka_max_rows_per_message, "1024");
 // Kafka producer send timeout in milliseconds (dynamic)

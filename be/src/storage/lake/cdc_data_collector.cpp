@@ -287,7 +287,7 @@ Status CdcDataCollector::collect_update_data(TabletManager* tablet_mgr, const Fi
     seg_options.fs = fs;
     seg_options.stats = &stats;
     seg_options.temporary_data = true;
-
+    seg_options.chunk_size = static_cast<int>(std::min<int64_t>(page_size, num_rows));
     ASSIGN_OR_RETURN(auto itr, segment->new_iterator(updated_schema, seg_options));
     auto page_chunk = ChunkHelper::new_chunk(updated_schema, page_size);
     size_t total_rows_read = 0;
@@ -299,7 +299,7 @@ Status CdcDataCollector::collect_update_data(TabletManager* tablet_mgr, const Fi
     int64_t page_number = 0;
     while (total_rows_read < num_rows) {
         page_chunk->reset();
-        seg_options.chunk_size = std::min<int64_t>(page_size, num_rows - total_rows_read);
+        //seg_options.chunk_size = std::min<int64_t>(page_size, num_rows - total_rows_read);
         // Iterator respects requested chunk size via options; get_next fills up to chunk_size
         RETURN_IF_ERROR(itr->get_next(page_chunk.get()));
         if (page_chunk->num_rows() == 0) break;

@@ -103,6 +103,13 @@ Status KafkaProducer::init_config() {
         return Status::InternalError(strings::Substitute("Failed to set message.timeout.ms: $0", errstr));
     }
 
+    // Set max message size
+    std::string max_msg_size_str = std::to_string(config::cdc_kafka_max_message_size);
+    if (rd_kafka_conf_set(_conf, "message.max.bytes", max_msg_size_str.c_str(), errstr, sizeof(errstr)) !=
+        RD_KAFKA_CONF_OK) {
+        return Status::InternalError(strings::Substitute("Failed to set message.max.bytes: $0", errstr));
+    }
+
     // Set security protocol
     if (rd_kafka_conf_set(_conf, "security.protocol", config::cdc_kafka_security_protocol.c_str(), errstr,
                           sizeof(errstr)) != RD_KAFKA_CONF_OK) {
