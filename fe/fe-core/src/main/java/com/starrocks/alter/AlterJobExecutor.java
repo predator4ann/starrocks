@@ -545,6 +545,10 @@ public class AlterJobExecutor implements AstVisitor<Void, ConnectContext> {
                         GlobalStateMgr.getCurrentState().getLocalMetastore().alterTableProperties(db, olapTable, properties);
                     } else if (properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_ENABLE)) {
                         GlobalStateMgr.getCurrentState().getLocalMetastore().alterTableProperties(db, olapTable, properties);
+                    } else if (properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC)) {
+                        GlobalStateMgr.getCurrentState().getLocalMetastore().alterTableProperties(db, olapTable, properties);
+                    } else if (properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE)) {
+                        GlobalStateMgr.getCurrentState().getLocalMetastore().alterTableProperties(db, olapTable, properties);
                     } else {
                         schemaChangeHandler.process(Lists.newArrayList(clause), db, olapTable);
                     }

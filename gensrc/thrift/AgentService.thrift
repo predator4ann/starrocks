@@ -360,6 +360,8 @@ struct TPublishVersionRequest {
     8: optional i64 gtid
     9: optional bool is_version_overwrite = false
     10: optional bool cdc_enable = false
+    11: optional string cdc_kafka_topic
+    12: optional bool cdc_ignore_delete = false
 }
 
 struct TClearAlterTaskRequest {

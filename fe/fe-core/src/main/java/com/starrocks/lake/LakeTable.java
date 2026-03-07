@@ -168,6 +168,14 @@ public class LakeTable extends OlapTable {
             properties.put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, "true");
         }
 
+        if (tableProperty != null && tableProperty.getCdcKafkaTopic() != null) {
+            properties.put(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC, tableProperty.getCdcKafkaTopic());
+        }
+
+        if (tableProperty != null && tableProperty.isCdcIgnoreDelete()) {
+            properties.put(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE, String.valueOf(tableProperty.isCdcIgnoreDelete()));
+        }
+
         // storage volume
         StorageVolumeMgr svm = GlobalStateMgr.getCurrentState().getStorageVolumeMgr();
         properties.put(PropertyAnalyzer.PROPERTIES_STORAGE_VOLUME, svm.getStorageVolumeNameOfTable(id));

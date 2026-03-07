@@ -72,6 +72,8 @@ public class PublishVersionTask extends AgentTask {
     private final long globalTransactionId;
     private boolean isVersionOverwrite = false;
     private boolean cdcEnable = false;
+    private String cdcKafkaTopic = null;
+    private boolean cdcIgnoreDelete = false;
 
     public PublishVersionTask(long backendId, long transactionId, long globalTransactionId, long dbId, long commitTimestamp,
                               List<TPartitionVersionInfo> partitionVersionInfos, String traceParent, Span txnSpan,
@@ -116,6 +118,8 @@ public class PublishVersionTask extends AgentTask {
             publishVersionRequest.setIs_version_overwrite(isVersionOverwrite);
         }
         publishVersionRequest.setCdc_enable(cdcEnable);
+        publishVersionRequest.setCdc_kafka_topic(cdcKafkaTopic);
+        publishVersionRequest.setCdc_ignore_delete(cdcIgnoreDelete);
         
         LOG.debug("publish version request: {}", publishVersionRequest);
         return publishVersionRequest;
@@ -168,6 +172,22 @@ public class PublishVersionTask extends AgentTask {
 
     public void setCdcEnable(boolean cdcEnable) {
         this.cdcEnable = cdcEnable;
+    }
+
+    public String getCdcKafkaTopic() {
+        return cdcKafkaTopic;
+    }
+
+    public void setCdcKafkaTopic(String cdcKafkaTopic) {
+        this.cdcKafkaTopic = cdcKafkaTopic;
+    }
+
+    public boolean isCdcIgnoreDelete() {
+        return cdcIgnoreDelete;
+    }
+
+    public void setCdcIgnoreDelete(boolean cdcIgnoreDelete) {
+        this.cdcIgnoreDelete = cdcIgnoreDelete;
     }
 
     private Set<Long> collectErrorReplicas() {

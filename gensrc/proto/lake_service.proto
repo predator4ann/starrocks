@@ -39,6 +39,10 @@ message PublishVersionRequest {
     repeated TxnInfoPB txn_infos = 7;
     repeated int64 rebuild_pindex_tablet_ids = 8;
     optional bool cdc_enable = 9;
+    // Per-table Kafka topic override; empty means use the global cdc_kafka_topic BE config.
+    optional string cdc_kafka_topic = 10;
+    // Per-table delete-event control; absent means follow the global cdc_ignore_delete BE config.
+    optional bool cdc_ignore_delete = 11;
 }
 
 message PublishVersionResponse {

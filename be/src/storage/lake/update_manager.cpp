@@ -1157,7 +1157,8 @@ bool UpdateManager::TEST_primary_index_refcnt(int64_t tablet_id, uint32_t expect
 
 Status UpdateManager::_collect_segment_cdc_data(const TxnLogPB_OpWrite& op_write, const RowsetUpdateStateParams& params,
                                                 int64_t txn_id, const TabletMetadataPtr& metadata,
-                                                CdcTransactionData* cdc_collector, int64_t& total_cdc_time) {
+                                                CdcTransactionData* cdc_collector, int64_t& total_cdc_time,
+                                                const std::string& topic) {
     if (cdc_collector == nullptr) {
         return Status::OK();
     }
@@ -1205,7 +1206,7 @@ Status UpdateManager::_collect_segment_cdc_data(const TxnLogPB_OpWrite& op_write
         // Collect CDC data from segment file
         RETURN_IF_ERROR(_cdc_collector->collect_update_data(params.tablet->tablet_mgr(), src, params.tablet_schema,
                                                             cdc_column_ids, segment_id, txn_id, metadata->version(),
-                                                            cdc_collector));
+                                                            cdc_collector, topic));
     }
 
     int64_t cdc_end = MonotonicMillis();
@@ -1215,7 +1216,8 @@ Status UpdateManager::_collect_segment_cdc_data(const TxnLogPB_OpWrite& op_write
 
 Status UpdateManager::_collect_delete_cdc_data(const TxnLogPB_OpWrite& op_write, const RowsetUpdateStateParams& params,
                                                int64_t txn_id, const TabletMetadataPtr& metadata,
-                                               CdcTransactionData* cdc_collector, int64_t& total_cdc_time) {
+                                               CdcTransactionData* cdc_collector, int64_t& total_cdc_time,
+                                               const std::string& topic) {
     if (cdc_collector == nullptr || op_write.dels_size() == 0) {
         return Status::OK();
     }
@@ -1235,8 +1237,8 @@ Status UpdateManager::_collect_delete_cdc_data(const TxnLogPB_OpWrite& op_write,
         DCHECK(state.deletes(del_id) != nullptr);
 
         // Collect delete data (primary key columns only)
-        RETURN_IF_ERROR(
-                _cdc_collector->collect_delete_data(del_id, state, params, txn_id, metadata->version(), cdc_collector));
+        RETURN_IF_ERROR(_cdc_collector->collect_delete_data(del_id, state, params, txn_id, metadata->version(),
+                                                            cdc_collector, topic));
 
         state.release_delete(del_id);
     }
@@ -1248,12 +1250,15 @@ Status UpdateManager::_collect_delete_cdc_data(const TxnLogPB_OpWrite& op_write,
 
 StatusOr<int64_t> UpdateManager::process_unified_cdc(const TxnLogPB_OpWrite& op_write, int64_t txn_id,
                                                      const TabletMetadataPtr& metadata, Tablet* tablet,
-                                                     bool cdc_enable) {
+                                                     const CdcConfig& cdc_config) {
     int64_t total_cdc_time = 0;
 
-    if (!cdc_enable || !_cdc_collector) {
+    if (!cdc_config.enable || !_cdc_collector) {
         return total_cdc_time;
     }
+
+    // Resolve effective Kafka topic: table-level setting takes priority over global config.
+    const std::string& effective_topic = cdc_config.topic.empty() ? config::cdc_kafka_topic : cdc_config.topic;
 
     auto cdc_collector = std::make_unique<CdcTransactionData>(tablet->id(), txn_id, metadata->version());
 
@@ -1268,11 +1273,15 @@ StatusOr<int64_t> UpdateManager::process_unified_cdc(const TxnLogPB_OpWrite& op_
             .container = rssid_fileinfo_container,
     };
 
-    // Collect CDC data for deletions
-    RETURN_IF_ERROR(_collect_delete_cdc_data(op_write, params, txn_id, metadata, cdc_collector.get(), total_cdc_time));
+    // Collect CDC data for deletions (gated by both global and per-table ignore_delete flags).
+    if (!config::cdc_ignore_delete && !cdc_config.ignore_delete) {
+        RETURN_IF_ERROR(_collect_delete_cdc_data(op_write, params, txn_id, metadata, cdc_collector.get(),
+                                                 total_cdc_time, effective_topic));
+    }
 
-    // Collect CDC data for non-delete operations
-    RETURN_IF_ERROR(_collect_segment_cdc_data(op_write, params, txn_id, metadata, cdc_collector.get(), total_cdc_time));
+    // Collect CDC data for non-delete operations (updates / full-row writes).
+    RETURN_IF_ERROR(_collect_segment_cdc_data(op_write, params, txn_id, metadata, cdc_collector.get(), total_cdc_time,
+                                              effective_topic));
 
     return total_cdc_time;
 }

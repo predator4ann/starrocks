@@ -37,8 +37,8 @@ public:
     // Shutdown the producer
     void shutdown();
 
-    // Send message synchronously to Kafka
-    // Returns Status::OK() if message is successfully delivered
+    // Send message synchronously to Kafka.
+    // Blocks until the broker acknowledges delivery (or timeout expires).
     Status send_sync(const std::string& topic, const std::string& key, const std::string& message, int timeout_ms = -1);
 
     // Check if producer is initialized and ready

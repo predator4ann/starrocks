@@ -241,6 +241,28 @@ public class AlterTableClauseAnalyzer implements AstVisitor<Void, ConnectContext
                     ErrorReport.reportSemanticException(ErrorCode.ERR_COMMON_ERROR, e.getMessage());
                 }
             }
+        } else if (properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC)) {
+            if (table instanceof OlapTable) {
+                OlapTable olapTable = (OlapTable) table;
+                String cdcKafkaTopic = properties.get(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC);
+                if (cdcKafkaTopic == null || cdcKafkaTopic.trim().isEmpty()) {
+                    ErrorReport.reportSemanticException(ErrorCode.ERR_COMMON_ERROR, "cdc.kafka.topic cannot be empty");
+                }
+                if (olapTable.getKeysType() != KeysType.PRIMARY_KEYS) {
+                    ErrorReport.reportSemanticException(ErrorCode.ERR_COMMON_ERROR,
+                            "CDC kafka topic can only be set on primary key tables");
+                }
+            }
+        } else if (properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE)) {
+            if (table instanceof OlapTable) {
+                OlapTable olapTable = (OlapTable) table;
+                String cdcIgnoreDeleteValue = properties.get(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE);
+                boolean cdcIgnoreDelete = Boolean.parseBoolean(cdcIgnoreDeleteValue);
+                if (cdcIgnoreDelete && olapTable.getKeysType() != KeysType.PRIMARY_KEYS) {
+                    ErrorReport.reportSemanticException(ErrorCode.ERR_COMMON_ERROR,
+                            "CDC ignore delete can only be enabled on primary key tables");
+                }
+            }
         } else if (properties.containsKey(PropertyAnalyzer.PROPERTIES_REPLICATION_NUM)) {
             PropertyAnalyzer.analyzeReplicationNum(properties, false);
         } else if (properties.containsKey(PropertyAnalyzer.PROPERTIES_STORAGE_COOLDOWN_TTL)) {

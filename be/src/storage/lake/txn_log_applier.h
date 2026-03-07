@@ -19,6 +19,7 @@
 #include "common/status.h"
 #include "gutil/macros.h"
 #include "storage/lake/tablet_metadata.h"
+#include "storage/lake/transactions.h"
 
 namespace starrocks {
 class TxnLogPB;
@@ -46,6 +47,7 @@ protected:
 };
 
 std::unique_ptr<TxnLogApplier> new_txn_log_applier(const Tablet& tablet, MutableTabletMetadataPtr metadata,
-                                                   int64_t new_version, bool rebuild_pindex, bool cdc_enable = false);
+                                                   int64_t new_version, bool rebuild_pindex,
+                                                   const CdcConfig& cdc_config = {});
 
 } // namespace starrocks::lake

@@ -704,6 +704,24 @@ public class OlapTableFactory implements AbstractTableFactory {
                     throw new DdlException(e.getMessage());
                 }
             }
+
+            if (properties != null && properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC)) {
+                try {
+                    String cdcKafkaTopic = PropertyAnalyzer.analyzeCdcKafkaTopic(properties);
+                    table.getTableProperty().setCdcKafkaTopic(cdcKafkaTopic);
+                } catch (AnalysisException e) {
+                    throw new DdlException(e.getMessage());
+                }
+            }
+
+            if (properties != null && properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE)) {
+                try {
+                    Boolean cdcIgnoreDelete = PropertyAnalyzer.analyzeCdcIgnoreDelete(properties);
+                    table.getTableProperty().setCdcIgnoreDelete(cdcIgnoreDelete);
+                } catch (AnalysisException e) {
+                    throw new DdlException(e.getMessage());
+                }
+            }
             
             // a set to record every new tablet created when create table
             // if failed in any step, use this set to do clear things

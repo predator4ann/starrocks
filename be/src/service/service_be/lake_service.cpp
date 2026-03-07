@@ -220,12 +220,18 @@ void LakeServiceImpl::publish_version(::google::protobuf::RpcController* control
 
                     StatusOr<TabletMetadataPtr> res;
                     if (std::chrono::system_clock::now() < timeout_deadline) {
-                        bool cdc_enable = false;
+                        lake::CdcConfig cdc_config;
                         if (request->has_cdc_enable()) {
-                            cdc_enable = request->cdc_enable();
+                            cdc_config.enable = request->cdc_enable();
+                        }
+                        if (request->has_cdc_kafka_topic()) {
+                            cdc_config.topic = request->cdc_kafka_topic();
+                        }
+                        if (request->has_cdc_ignore_delete()) {
+                            cdc_config.ignore_delete = request->cdc_ignore_delete();
                         }
                         res = lake::publish_version(_tablet_mgr, tablet_id, base_version, new_version, txns,
-                                                    cdc_enable);
+                                                    cdc_config);
                     } else {
                         auto t = MilliSecondsSinceEpochFromTimePoint(timeout_deadline);
                         res = Status::TimedOut(fmt::format("reached deadline={}/timeout={}", t, timeout_ms));

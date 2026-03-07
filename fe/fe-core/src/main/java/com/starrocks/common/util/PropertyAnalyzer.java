@@ -262,6 +262,10 @@ public class PropertyAnalyzer {
 
     // CDC (Change Data Capture) properties
     public static final String PROPERTIES_CDC_ENABLE = "cdc.enable";
+    // Per-table Kafka topic for CDC events; overrides the global cdc_kafka_topic BE config when set.
+    public static final String PROPERTIES_CDC_KAFKA_TOPIC = "cdc.kafka.topic";
+    // Per-table control for DELETE event inclusion; overrides the global cdc_ignore_delete BE config when set.
+    public static final String PROPERTIES_CDC_IGNORE_DELETE = "cdc.ignore.delete";
 
     public static DataProperty analyzeDataProperty(Map<String, String> properties,
                                                    DataProperty inferredDataProperty,
@@ -1812,15 +1816,63 @@ public class PropertyAnalyzer {
             String value = properties.get(PROPERTIES_CDC_ENABLE);
             properties.remove(PROPERTIES_CDC_ENABLE);
             boolean cdcEnable = Boolean.parseBoolean(value);
-            
+
             if (cdcEnable) {
                 // Only primary key tables can enable CDC
                 if (null != keysType && keysType != KeysType.PRIMARY_KEYS) {
                     throw new AnalysisException("CDC can only be enabled on primary key tables");
                 }
             }
-            
+
             return cdcEnable;
+        }
+        return false;
+    }
+
+    /**
+     * Parses the per-table Kafka topic property {@code cdc.kafka.topic}.
+     * Returns null when the property is absent (meaning the global BE config {@code cdc_kafka_topic} is used).
+     */
+    public static String analyzeCdcKafkaTopic(Map<String, String> properties) throws AnalysisException {
+        return analyzeCdcKafkaTopic(properties, null);
+    }
+
+    public static String analyzeCdcKafkaTopic(Map<String, String> properties, KeysType keysType) throws AnalysisException {
+        if (properties != null && properties.containsKey(PROPERTIES_CDC_KAFKA_TOPIC)) {
+            String value = properties.remove(PROPERTIES_CDC_KAFKA_TOPIC);
+            if (value == null || value.trim().isEmpty()) {
+                throw new AnalysisException("cdc.kafka.topic cannot be empty");
+            } else {
+                // Only primary key tables can enable CDC
+                if (null != keysType && keysType != KeysType.PRIMARY_KEYS) {
+                    throw new AnalysisException("CDC kafka topic can only be set on primary key tables");
+                }
+            }
+            return value.trim();
+        }
+        return null;
+    }
+
+    /**
+     * Parses the per-table delete-event control property {@code cdc.ignore.delete}.
+     * Returns null when the property is absent (meaning the global BE config {@code cdc_ignore_delete} is used).
+     */
+    public static boolean analyzeCdcIgnoreDelete(Map<String, String> properties) throws AnalysisException {
+        return analyzeCdcIgnoreDelete(properties, null);
+    }
+
+    public static boolean analyzeCdcIgnoreDelete(Map<String, String> properties, KeysType keysType) throws AnalysisException {
+        if (properties != null && properties.containsKey(PROPERTIES_CDC_IGNORE_DELETE)) {
+            String value = properties.remove(PROPERTIES_CDC_IGNORE_DELETE);
+            boolean cdcIgnoreDelete = Boolean.parseBoolean(value);
+
+            if (cdcIgnoreDelete) {
+                // Only primary key tables can enable CDC
+                if (null != keysType && keysType != KeysType.PRIMARY_KEYS) {
+                    throw new AnalysisException("CDC ignore delete can only be enabled on primary key tables");
+                }
+            }
+            return cdcIgnoreDelete;
         }
         return false;
     }

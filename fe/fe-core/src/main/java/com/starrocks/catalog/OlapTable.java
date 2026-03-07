@@ -3532,6 +3532,14 @@ public class OlapTable extends Table {
             properties.put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, String.valueOf(tableProperty.isCdcEnable()));
         }
 
+        if (tableProperty != null && tableProperty.getCdcKafkaTopic() != null) {
+            properties.put(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC, tableProperty.getCdcKafkaTopic());
+        }
+
+        if (tableProperty != null && tableProperty.isCdcIgnoreDelete()) {
+            properties.put(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE, String.valueOf(tableProperty.isCdcIgnoreDelete()));
+        }
+
         return properties;
     }
 

@@ -3627,6 +3627,23 @@ public class LocalMetastore implements ConnectorMetadata, MVRepairHandler, Memor
                                 ImmutableMap.of(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, String.valueOf(cdcEnable)));
                 GlobalStateMgr.getCurrentState().getEditLog().logAlterTableProperties(info);
             }
+            if (propertiesToPersist.containsKey(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC)) {
+                String cdcKafkaTopic = propertiesToPersist.get(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC);
+                tableProperty.setCdcKafkaTopic(cdcKafkaTopic);
+                ModifyTablePropertyOperationLog info =
+                        new ModifyTablePropertyOperationLog(db.getId(), table.getId(),
+                                ImmutableMap.of(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC, cdcKafkaTopic));
+                GlobalStateMgr.getCurrentState().getEditLog().logAlterTableProperties(info);
+            }
+            if (propertiesToPersist.containsKey(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE)) {
+                boolean cdcIgnoreDelete = 
+                        Boolean.parseBoolean(propertiesToPersist.get(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE));
+                tableProperty.setCdcIgnoreDelete(cdcIgnoreDelete);
+                ModifyTablePropertyOperationLog info =
+                        new ModifyTablePropertyOperationLog(db.getId(), table.getId(),
+                                ImmutableMap.of(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE, String.valueOf(cdcIgnoreDelete)));
+                GlobalStateMgr.getCurrentState().getEditLog().logAlterTableProperties(info);
+            }
             if (propertiesToPersist.containsKey(PropertyAnalyzer.PROPERTIES_STORAGE_MEDIUM)) {
                 DataProperty dataProperty = (DataProperty) results.get(key);
                 TStorageMedium storageMedium = dataProperty.getStorageMedium();
@@ -3786,6 +3803,22 @@ public class LocalMetastore implements ConnectorMetadata, MVRepairHandler, Memor
             try {
                 boolean cdcEnable = PropertyAnalyzer.analyzeCdcEnable(properties, table.getKeysType());
                 results.put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, cdcEnable);
+            } catch (AnalysisException e) {
+                throw new DdlException(e.getMessage());
+            }
+        }
+        if (properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC)) {
+            try {
+                String cdcKafkaTopic = PropertyAnalyzer.analyzeCdcKafkaTopic(properties, table.getKeysType());
+                results.put(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC, cdcKafkaTopic);
+            } catch (AnalysisException e) {
+                throw new DdlException(e.getMessage());
+            }
+        }
+        if (properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE)) {
+            try {
+                Boolean cdcIgnoreDelete = PropertyAnalyzer.analyzeCdcIgnoreDelete(properties, table.getKeysType());
+                results.put(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE, cdcIgnoreDelete);
             } catch (AnalysisException e) {
                 throw new DdlException(e.getMessage());
             }
@@ -4232,7 +4265,9 @@ public class LocalMetastore implements ConnectorMetadata, MVRepairHandler, Memor
                     olapTable.setTableProperty(tableProperty.buildProperty(opCode));
                 } else {
                     tableProperty.modifyTableProperties(properties);
-                    if (properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_ENABLE)) {
+                    if (properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_ENABLE) 
+                            || properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC) 
+                            || properties.containsKey(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE)) {
                         tableProperty.buildCdcConfig(olapTable.getKeysType());
                     }
                     tableProperty.buildProperty(opCode);

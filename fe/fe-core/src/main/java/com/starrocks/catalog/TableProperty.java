@@ -317,6 +317,14 @@ public class TableProperty implements Writable, GsonPostProcessable {
     @SerializedName(value = "cdcEnable")
     private boolean cdcEnable = false;
 
+    // Per-table Kafka topic for CDC events. null means "use the global BE config cdc_kafka_topic".
+    @SerializedName(value = "cdcKafkaTopic")
+    private String cdcKafkaTopic = null;
+
+    // Per-table delete-event control. null means "use the global BE config cdc_ignore_delete".
+    @SerializedName(value = "cdcIgnoreDelete")
+    private boolean cdcIgnoreDelete = false;
+
     public TableProperty() {
         this(Maps.newLinkedHashMap());
     }
@@ -828,6 +836,14 @@ public class TableProperty implements Writable, GsonPostProcessable {
             if (cdcEnable) {
                 properties.put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, "true");
             }
+            cdcKafkaTopic = PropertyAnalyzer.analyzeCdcKafkaTopic(properties);
+            if (cdcKafkaTopic != null) {
+                properties.put(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC, cdcKafkaTopic);
+            }
+            cdcIgnoreDelete = PropertyAnalyzer.analyzeCdcIgnoreDelete(properties);
+            if (cdcIgnoreDelete) {
+                properties.put(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE, "true");
+            }
         } catch (AnalysisException e) {
             LOG.warn("Failed to build CDC config", e);
         }
@@ -839,6 +855,14 @@ public class TableProperty implements Writable, GsonPostProcessable {
             cdcEnable = PropertyAnalyzer.analyzeCdcEnable(properties, keysType);
             if (cdcEnable) {
                 properties.put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, "true");
+            }
+            cdcKafkaTopic = PropertyAnalyzer.analyzeCdcKafkaTopic(properties, keysType);
+            if (cdcKafkaTopic != null) {
+                properties.put(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC, cdcKafkaTopic);
+            }
+            cdcIgnoreDelete = PropertyAnalyzer.analyzeCdcIgnoreDelete(properties, keysType);
+            if (cdcIgnoreDelete) {
+                properties.put(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE, "true");
             }
         } catch (AnalysisException e) {
             LOG.warn("Failed to build CDC config", e);
@@ -1132,6 +1156,34 @@ public class TableProperty implements Writable, GsonPostProcessable {
             properties.put(PropertyAnalyzer.PROPERTIES_CDC_ENABLE, "true");
         } else {
             properties.remove(PropertyAnalyzer.PROPERTIES_CDC_ENABLE);
+        }
+    }
+
+    /** Returns the per-table Kafka topic, or null if not set (global config applies). */
+    public String getCdcKafkaTopic() {
+        return cdcKafkaTopic;
+    }
+
+    public void setCdcKafkaTopic(String cdcKafkaTopic) {
+        this.cdcKafkaTopic = cdcKafkaTopic;
+        if (cdcKafkaTopic != null && !cdcKafkaTopic.isEmpty()) {
+            properties.put(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC, cdcKafkaTopic);
+        } else {
+            properties.remove(PropertyAnalyzer.PROPERTIES_CDC_KAFKA_TOPIC);
+        }
+    }
+
+    /** Returns the per-table delete-enable flag, or null if not set (global config applies). */
+    public boolean isCdcIgnoreDelete() {
+        return cdcIgnoreDelete;
+    }
+
+    public void setCdcIgnoreDelete(boolean cdcIgnoreDelete) {
+        this.cdcIgnoreDelete = cdcIgnoreDelete;
+        if (cdcIgnoreDelete) {
+            properties.put(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE, "true");
+        } else {
+            properties.remove(PropertyAnalyzer.PROPERTIES_CDC_IGNORE_DELETE);
         }
     }
 

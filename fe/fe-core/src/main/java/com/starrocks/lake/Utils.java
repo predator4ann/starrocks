@@ -101,13 +101,14 @@ public class Utils {
     public static void publishVersion(@NotNull List<Tablet> tablets, TxnInfoPB txnInfo, long baseVersion,
                                       long newVersion, long warehouseId)
             throws NoAliveBackendException, RpcException {
-        publishVersion(tablets, txnInfo, baseVersion, newVersion, null, warehouseId, null, false);
+        publishVersion(tablets, txnInfo, baseVersion, newVersion, null, warehouseId, null, false, null, null);
     }
 
-    public static void publishVersion(@NotNull List<Tablet> tablets, TxnInfoPB txnInfo, long baseVersion,
-                                      long newVersion, long warehouseId, boolean cdcEnable)
+    public static void publishVersion(@NotNull List<Tablet> tablets, TxnInfoPB txnInfo, long baseVersion, long newVersion,
+                                      long warehouseId, boolean cdcEnable, String cdcKafkaTopic, boolean cdcIgnoreDelete)
             throws NoAliveBackendException, RpcException {
-        publishVersion(tablets, txnInfo, baseVersion, newVersion, null, warehouseId, null, cdcEnable);
+        publishVersion(tablets, txnInfo, baseVersion, newVersion, null, 
+                warehouseId, null, cdcEnable, cdcKafkaTopic, cdcIgnoreDelete);
     }
 
     public static void publishVersionBatch(@NotNull List<Tablet> tablets, List<TxnInfoPB> txnInfos,
@@ -118,7 +119,7 @@ public class Utils {
                                            Map<Long, Long> tabletRowNum)
             throws NoAliveBackendException, RpcException {
         publishVersionBatch(tablets, txnInfos, baseVersion, newVersion, compactionScores, nodeToTablets, warehouseId,
-                tabletRowNum, false);
+                tabletRowNum, false, null, null);
     }
 
     public static void publishVersionBatch(@NotNull List<Tablet> tablets, List<TxnInfoPB> txnInfos,
@@ -127,7 +128,9 @@ public class Utils {
                                            Map<ComputeNode, List<Long>> nodeToTablets,
                                            long warehouseId,
                                            Map<Long, Long> tabletRowNum,
-                                           boolean cdcEnable)
+                                           boolean cdcEnable,
+                                           String cdcKafkaTopic,
+                                           Boolean cdcIgnoreDelete)
             throws NoAliveBackendException, RpcException {
         if (nodeToTablets == null) {
             nodeToTablets = new HashMap<>();
@@ -171,6 +174,12 @@ public class Utils {
                 request.rebuildPindexTabletIds = rebuildPindexTabletIds;
             }
             request.cdcEnable = cdcEnable;
+            if (cdcKafkaTopic != null && !cdcKafkaTopic.isEmpty()) {
+                request.cdcKafkaTopic = cdcKafkaTopic;
+            }
+            if (cdcIgnoreDelete != null) {
+                request.cdcIgnoreDelete = cdcIgnoreDelete;
+            }
 
             ComputeNode node = entry.getKey();
             LakeService lakeService = BrpcProxy.getLakeService(node.getHost(), node.getBrpcPort());
@@ -202,16 +211,18 @@ public class Utils {
                                       long newVersion, Map<Long, Double> compactionScores,
                                       long warehouseId, Map<Long, Long> tabletRowNums)
             throws NoAliveBackendException, RpcException {
-        publishVersion(tablets, txnInfo, baseVersion, newVersion, compactionScores, warehouseId, tabletRowNums, false);
+        publishVersion(tablets, txnInfo, baseVersion, newVersion, compactionScores, warehouseId, 
+                tabletRowNums, false, null, null);
     }
 
     public static void publishVersion(@NotNull List<Tablet> tablets, TxnInfoPB txnInfo, long baseVersion,
                                       long newVersion, Map<Long, Double> compactionScores,
-                                      long warehouseId, Map<Long, Long> tabletRowNums, boolean cdcEnable)
+                                      long warehouseId, Map<Long, Long> tabletRowNums, boolean cdcEnable,
+                                      String cdcKafkaTopic, Boolean cdcIgnoreDelete)
             throws NoAliveBackendException, RpcException {
         List<TxnInfoPB> txnInfos = Lists.newArrayList(txnInfo);
         publishVersionBatch(tablets, txnInfos, baseVersion, newVersion, compactionScores, null,
-                warehouseId, tabletRowNums, cdcEnable);
+                warehouseId, tabletRowNums, cdcEnable, cdcKafkaTopic, cdcIgnoreDelete);
     }
 
     public static void publishLogVersion(@NotNull List<Tablet> tablets, TxnInfoPB txnInfo, long version, long warehouseId)

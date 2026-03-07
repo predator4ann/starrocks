@@ -144,7 +144,8 @@ StatusOr<TxnLogPtr> load_txn_log(TabletManager* tablet_mgr, int64_t tablet_id, c
 } // namespace
 
 StatusOr<TabletMetadataPtr> publish_version(TabletManager* tablet_mgr, int64_t tablet_id, int64_t base_version,
-                                            int64_t new_version, std::span<const TxnInfoPB> txns, bool cdc_enable) {
+                                            int64_t new_version, std::span<const TxnInfoPB> txns,
+                                            const CdcConfig& cdc_config) {
     if (txns.size() == 1 && txns[0].txn_id() == EMPTY_TXNLOG_TXNID) {
         LOG(INFO) << "publish version tablet_id: " << tablet_id << ", txn: " << EMPTY_TXNLOG_TXNID
                   << ", base_version: " << base_version << ", new_version: " << new_version;
@@ -310,7 +311,7 @@ StatusOr<TabletMetadataPtr> publish_version(TabletManager* tablet_mgr, int64_t t
             // init log_applier
             new_metadata = std::make_shared<TabletMetadataPB>(*base_metadata);
             log_applier = new_txn_log_applier(Tablet(tablet_mgr, tablet_id), new_metadata, new_version,
-                                              txns[i].rebuild_pindex(), cdc_enable);
+                                              txns[i].rebuild_pindex(), cdc_config);
 
             if (new_metadata->compaction_inputs_size() > 0) {
                 new_metadata->mutable_compaction_inputs()->Clear();

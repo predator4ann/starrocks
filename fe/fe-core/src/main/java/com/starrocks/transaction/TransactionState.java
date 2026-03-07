@@ -1039,6 +1039,8 @@ public class TransactionState implements Writable, GsonPreProcessable {
                         TableProperty tableProperty = olapTable.getTableProperty();
                         if (tableProperty != null) {
                             task.setCdcEnable(tableProperty.isCdcEnable());
+                            task.setCdcKafkaTopic(tableProperty.getCdcKafkaTopic());
+                            task.setCdcIgnoreDelete(tableProperty.isCdcIgnoreDelete());
                             break;
                         }
                     }

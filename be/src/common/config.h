@@ -1713,6 +1713,8 @@ CONF_String(cdc_kafka_sasl_username, "");
 CONF_String(cdc_kafka_sasl_password, "");
 // Size of Kafka producer pool for CDC.
 CONF_Int32(cdc_kafka_pool_size, "4");
+// Whether to ignore DELETE events in CDC output. Global default; can be overridden per-table.
+CONF_mBool(cdc_ignore_delete, "false");
 
 // default batch size for simdjson lib
 CONF_mInt32(json_parse_many_batch_size, "1000000");

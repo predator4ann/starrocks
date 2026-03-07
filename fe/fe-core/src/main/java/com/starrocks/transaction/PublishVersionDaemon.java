@@ -482,6 +482,8 @@ public class PublishVersionDaemon extends FrontendDaemon {
         // version -> shadowTablets
         long warehouseId = WarehouseManager.DEFAULT_WAREHOUSE_ID;
         boolean cdcEnable = false;
+        String cdcKafkaTopic = null;
+        Boolean cdcIgnoreDelete = null;
         try {
             OlapTable table =
                     (OlapTable) GlobalStateMgr.getCurrentState().getLocalMetastore().getTable(db.getId(), tableId);
@@ -489,9 +491,11 @@ public class PublishVersionDaemon extends FrontendDaemon {
                 // table has been dropped
                 return true;
             }
-            
+
             if (table.getTableProperty() != null) {
                 cdcEnable = table.getTableProperty().isCdcEnable();
+                cdcKafkaTopic = table.getTableProperty().getCdcKafkaTopic();
+                cdcIgnoreDelete = table.getTableProperty().isCdcIgnoreDelete();
             }
 
             PhysicalPartition partition = table.getPhysicalPartition(publishVersionData.getPartitionId());
@@ -571,7 +575,7 @@ public class PublishVersionDaemon extends FrontendDaemon {
                 Map<ComputeNode, List<Long>> nodeToTablets = new HashMap<>();
                 Utils.publishVersionBatch(publishTablets, txnInfos,
                         startVersion - 1, endVersion, compactionScores, nodeToTablets,
-                        warehouseId, null, cdcEnable);
+                        warehouseId, null, cdcEnable, cdcKafkaTopic, cdcIgnoreDelete);
 
                 Quantiles quantiles = Quantiles.compute(compactionScores.values());
                 stateBatch.setCompactionScore(tableId, partitionId, quantiles);
@@ -796,6 +800,8 @@ public class PublishVersionDaemon extends FrontendDaemon {
         List<Tablet> normalTablets = null;
         List<Tablet> shadowTablets = null;
         boolean cdcEnable = false;
+        String cdcKafkaTopic = null;
+        Boolean cdcIgnoreDelete = null;
 
         Locker locker = new Locker();
         locker.lockTablesWithIntensiveDbLock(db.getId(), Lists.newArrayList(tableId), LockType.READ);
@@ -807,9 +813,11 @@ public class PublishVersionDaemon extends FrontendDaemon {
                 LOG.info("Removed non-exist table {} from transaction {}. txn_id={}", tableId, txnLabel, txnId);
                 return true;
             }
-            
+
             if (table.getTableProperty() != null) {
                 cdcEnable = table.getTableProperty().isCdcEnable();
+                cdcKafkaTopic = table.getTableProperty().getCdcKafkaTopic();
+                cdcIgnoreDelete = table.getTableProperty().isCdcIgnoreDelete();
             }
             long partitionId = partitionCommitInfo.getPhysicalPartitionId();
             PhysicalPartition partition = table.getPhysicalPartition(partitionId);
@@ -850,7 +858,7 @@ public class PublishVersionDaemon extends FrontendDaemon {
                 // Used to collect statistics when the partition is first imported
                 Map<Long, Long> tabletRowNums = new HashMap<>();
                 Utils.publishVersion(normalTablets, txnInfo, baseVersion, txnVersion, compactionScores,
-                        warehouseId, tabletRowNums, cdcEnable);
+                        warehouseId, tabletRowNums, cdcEnable, cdcKafkaTopic, cdcIgnoreDelete);
 
                 Quantiles quantiles = Quantiles.compute(compactionScores.values());
                 partitionCommitInfo.setCompactionScore(quantiles);

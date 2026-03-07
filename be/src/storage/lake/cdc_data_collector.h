@@ -61,14 +61,17 @@ public:
     CdcDataCollector() = default;
     ~CdcDataCollector() = default;
 
-    // Collect delete data
+    // Collect delete data.
+    // |topic| overrides the global cdc_kafka_topic config when non-empty.
     Status collect_delete_data(uint32_t del_id, const RowsetUpdateState& state, const RowsetUpdateStateParams& params,
-                               int64_t txn_id, int64_t version, CdcTransactionData* collector);
+                               int64_t txn_id, int64_t version, CdcTransactionData* collector,
+                               const std::string& topic);
 
-    // Collect updated column data by loading segment file (for rewrite scenarios)
+    // Collect updated column data by loading segment file (for rewrite scenarios).
+    // |topic| overrides the global cdc_kafka_topic config when non-empty.
     Status collect_update_data(TabletManager* tablet_mgr, const FileInfo& src, const TabletSchemaCSPtr& tablet_schema,
                                const std::vector<uint32_t>& updated_column_ids, uint32_t segment_id, int64_t txn_id,
-                               int64_t version, CdcTransactionData* collector);
+                               int64_t version, CdcTransactionData* collector, const std::string& topic);
 
 private:
     // Unified function: serialize Chunk directly to CDC data (protobuf or JSON based on config)

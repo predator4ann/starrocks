@@ -104,14 +104,14 @@ Status apply_alter_meta_log(TabletMetadataPB* metadata, const TxnLogPB_OpAlterMe
 class PrimaryKeyTxnLogApplier : public TxnLogApplier {
 public:
     PrimaryKeyTxnLogApplier(const Tablet& tablet, MutableTabletMetadataPtr metadata, int64_t new_version,
-                            bool rebuild_pindex, bool cdc_enable)
+                            bool rebuild_pindex, const CdcConfig& cdc_config)
             : _tablet(tablet),
               _metadata(std::move(metadata)),
               _base_version(_metadata->version()),
               _new_version(new_version),
               _builder(_tablet, _metadata),
               _rebuild_pindex(rebuild_pindex),
-              _cdc_enable(cdc_enable) {
+              _cdc_config(cdc_config) {
         _metadata->set_version(_new_version);
     }
 
@@ -283,11 +283,12 @@ private:
         }
         int64_t publish_time = MonotonicMillis() - publish_start;
 
-        // Execute CDC processing
+        // Execute CDC processing. When the circuit breaker is OPEN the collect methods return
+        // Status::OK() so publish version is never blocked by Kafka unavailability.
         int64_t total_cdc_time = 0;
-        if (config::cdc_enable && _cdc_enable) {
+        if (config::cdc_enable && _cdc_config.enable) {
             ASSIGN_OR_RETURN(total_cdc_time, _tablet.update_mgr()->process_unified_cdc(op_write, txn_id, _metadata,
-                                                                                       &_tablet, _cdc_enable));
+                                                                                       &_tablet, _cdc_config));
         }
 
         int64_t total_time = MonotonicMillis() - start_time;
@@ -298,7 +299,7 @@ private:
                 txn_id, total_time, publish_time, publish_ratio, total_cdc_time, cdc_ratio);
 
         // Record CDC and publish metrics when CDC is enabled
-        if (config::cdc_enable && _cdc_enable) {
+        if (config::cdc_enable && _cdc_config.enable) {
             StarRocksMetrics::instance()->cdc_process_total_duration_us.increment(total_cdc_time *
                                                                                   1000);      // Convert ms to us
             StarRocksMetrics::instance()->cdc_total_duration_us.increment(total_time * 1000); // Convert ms to us
@@ -435,7 +436,7 @@ private:
     // True when finalize meta file success.
     bool _has_finalized = false;
     bool _rebuild_pindex = false;
-    bool _cdc_enable = false;
+    CdcConfig _cdc_config;
 };
 
 class NonPrimaryKeyTxnLogApplier : public TxnLogApplier {
@@ -695,10 +696,11 @@ private:
 };
 
 std::unique_ptr<TxnLogApplier> new_txn_log_applier(const Tablet& tablet, MutableTabletMetadataPtr metadata,
-                                                   int64_t new_version, bool rebuild_pindex, bool cdc_enable) {
+                                                   int64_t new_version, bool rebuild_pindex,
+                                                   const CdcConfig& cdc_config) {
     if (metadata->schema().keys_type() == PRIMARY_KEYS) {
         return std::make_unique<PrimaryKeyTxnLogApplier>(tablet, std::move(metadata), new_version, rebuild_pindex,
-                                                         cdc_enable);
+                                                         cdc_config);
     }
     return std::make_unique<NonPrimaryKeyTxnLogApplier>(tablet, std::move(metadata), new_version);
 }

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <span>
+#include <string>
 
 #include "common/statusor.h"
 #include "storage/lake/tablet_metadata.h"
@@ -27,6 +28,21 @@ class TxnLogPB;
 namespace starrocks::lake {
 
 class TabletManager;
+
+// Per-table CDC configuration passed from FE at publish time.
+struct CdcConfig {
+    // Whether CDC is enabled for this table (table-level cdc.enable property).
+    bool enable = false;
+    // Per-table Kafka topic override. Empty string means fall back to the global
+    // cdc_kafka_topic BE config parameter.
+    std::string topic;
+    // Whether to ignore DELETE events.  Tri-state:
+    //   false  → include deletes (table-level cdc.ignore.delete=false)
+    //   true → skip deletes  (table-level cdc.ignore.delete=true)
+    // The global cdc_ignore_delete BE config is the outer gate: when it is true,
+    // deletes are always skipped regardless of this field.
+    bool ignore_delete = false;
+};
 
 // Publish a new version of tablet metadata by applying a set of transactions.
 //
@@ -44,12 +60,13 @@ class TabletManager;
 // - base_version Version of the base metadata
 // - new_version The new version to be published
 // - txns Transactions to apply in sequence
-// - cdc_enable Whether to enable Change Data Capture (CDC) for this publish operation
+// - cdc_config CDC configuration for this publish operation
 //
 // Return:
 // - StatusOr containing the new published TabletMetadataPtr on success.
 StatusOr<TabletMetadataPtr> publish_version(TabletManager* tablet_mgr, int64_t tablet_id, int64_t base_version,
-                                            int64_t new_version, std::span<const TxnInfoPB> txns, bool cdc_enable);
+                                            int64_t new_version, std::span<const TxnInfoPB> txns,
+                                            const CdcConfig& cdc_config);
 
 // Publish a batch new versions of transaction logs.
 //

@@ -22,6 +22,7 @@
 #include "common/config.h"
 #include "common/logging.h"
 #include "gutil/strings/substitute.h"
+#include "util/starrocks_metrics.h"
 
 namespace starrocks::lake {
 
@@ -203,16 +204,24 @@ Status KafkaProducer::send_sync(const std::string& topic, const std::string& key
         return Status::InternalError("KafkaProducer is shutdown");
     }
 
-    // Create synchronization context
+    // sync_ctx: local shared_ptr that keeps SyncContext alive during the wait loop.
     auto sync_ctx = std::make_shared<SyncContext>();
+
+    // ctx_ptr: a heap-allocated shared_ptr reference passed to librdkafka as the per-message
+    // opaque pointer. The delivery callback is responsible for deleting ctx_ptr, which ensures
+    // SyncContext stays alive until the callback fires — even if send_sync has already returned
+    // (e.g., due to timeout or early circuit-breaker exit). This prevents a use-after-free.
+    auto* ctx_ptr = new std::shared_ptr<SyncContext>(sync_ctx);
 
     // Send message asynchronously with callback
     rd_kafka_resp_err_t err = rd_kafka_producev(
             _producer, RD_KAFKA_V_TOPIC(topic.c_str()), RD_KAFKA_V_KEY(key.c_str(), key.size()),
             RD_KAFKA_V_VALUE(const_cast<void*>(static_cast<const void*>(message.c_str())), message.size()),
-            RD_KAFKA_V_OPAQUE(sync_ctx.get()), RD_KAFKA_V_END);
+            RD_KAFKA_V_OPAQUE(ctx_ptr), RD_KAFKA_V_END);
 
     if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+        // Enqueue failed: the delivery callback will never be called, so we must free ctx_ptr.
+        delete ctx_ptr;
         return Status::InternalError(strings::Substitute("Failed to produce message: $0", rd_kafka_err2str(err)));
     }
 
@@ -228,6 +237,7 @@ Status KafkaProducer::send_sync(const std::string& topic, const std::string& key
         {
             std::lock_guard<std::mutex> lk(sync_ctx->mutex);
             if (sync_ctx->completed) {
+                // Delivery callback has already fired and deleted ctx_ptr.
                 if (sync_ctx->error == RD_KAFKA_RESP_ERR_NO_ERROR) {
                     return Status::OK();
                 }
@@ -240,6 +250,9 @@ Status KafkaProducer::send_sync(const std::string& topic, const std::string& key
         const auto now = std::chrono::steady_clock::now();
         const auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count();
         if (elapsed_ms >= actual_timeout) {
+            // Timed out. ctx_ptr is still owned by librdkafka; the delivery callback will
+            // delete it when the message finally fails on the broker side. SyncContext will
+            // be destroyed then (when this shared_ptr ref also drops at function return).
             return Status::TimedOut("Kafka message delivery timeout");
         }
 
@@ -249,7 +262,7 @@ Status KafkaProducer::send_sync(const std::string& topic, const std::string& key
 }
 
 std::string KafkaProducer::get_topic_name() const {
-    return strings::Substitute("$0", config::cdc_kafka_topic);
+    return config::cdc_kafka_topic;
 }
 
 std::once_flag KafkaProducerPool::_init_flag;
@@ -303,15 +316,20 @@ void KafkaProducerPool::shutdown() {
 }
 
 void KafkaProducer::delivery_report_cb(rd_kafka_t* rk, const rd_kafka_message_t* rkmessage, void* opaque) {
-    // For per-message opaque passed via RD_KAFKA_V_OPAQUE, retrieve from rkmessage->_private
+    // rkmessage->_private is the ctx_ptr (heap-allocated shared_ptr<SyncContext>) passed via
+    // RD_KAFKA_V_OPAQUE. We own this pointer and must delete it here to release our reference.
+    // This is the only place ctx_ptr is deleted, which ensures SyncContext stays alive until
+    // at least this callback fires, preventing the use-after-free that would occur if send_sync
+    // timed out and returned before the callback.
     if (rkmessage && rkmessage->_private) {
-        auto* sync_ctx = static_cast<SyncContext*>(rkmessage->_private);
-        if (sync_ctx) {
-            std::lock_guard<std::mutex> lock(sync_ctx->mutex);
-            sync_ctx->error = rkmessage->err;
-            sync_ctx->completed = true;
-            sync_ctx->cv.notify_one();
+        auto* ctx_ptr = static_cast<std::shared_ptr<SyncContext>*>(rkmessage->_private);
+        {
+            std::lock_guard<std::mutex> lock((*ctx_ptr)->mutex);
+            (*ctx_ptr)->error = rkmessage->err;
+            (*ctx_ptr)->completed = true;
+            (*ctx_ptr)->cv.notify_one();
         }
+        delete ctx_ptr; // Release our heap-allocated reference; SyncContext may be destroyed here.
     }
 
     if (rkmessage->err != RD_KAFKA_RESP_ERR_NO_ERROR) {
@@ -324,8 +342,8 @@ void KafkaProducer::delivery_report_cb(rd_kafka_t* rk, const rd_kafka_message_t*
 }
 
 void KafkaProducer::error_cb(rd_kafka_t* rk, int err, const char* reason, void* opaque) {
-    LOG(ERROR) << "Kafka producer error: " << rd_kafka_err2str(static_cast<rd_kafka_resp_err_t>(err))
-               << " reason: " << reason;
+    auto rk_err = static_cast<rd_kafka_resp_err_t>(err);
+    LOG(ERROR) << "Kafka producer error: " << rd_kafka_err2str(rk_err) << " reason: " << reason;
 }
 
 void KafkaProducer::log_cb(const rd_kafka_t* rk, int level, const char* fac, const char* buf) {
